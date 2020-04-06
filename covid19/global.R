@@ -881,7 +881,7 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
     DailyData$ID<-rep("SEIAR",nrow(DailyData))
     IHME_Data$ID<-rep("IHME",nrow(IHME_Data))
     OverlayData<-rbind(DailyData,IHME_Data)
-    
+    OverlayData$ForecastDate<-as.Date(OverlayData$ForecastDate)
     
     
     
@@ -956,6 +956,7 @@ PlotLocalChoro<-function(IncludedCounties, ChosenBase, TypofPlot){
             scale_fill_viridis("Cases")
         
         ggplotly(PlotCovidLocal)
+        
     } else  {
         BaseStats<-dplyr::filter(AFBaseLocations, Base == ChosenBase)
         #Creating the choropleth dataset so we have all info in one data set and can plot it together
@@ -973,7 +974,7 @@ PlotLocalChoro<-function(IncludedCounties, ChosenBase, TypofPlot){
             coord_fixed() +
             theme_minimal() +
             ggtitle("COVID-19 Cases by County (State View)") +
-            geom_point(data = BaseStats, aes(x=Long, y=Lat, group = 1),
+            geom_point(data = BaseStats, aes(x= Long, y= Lat, group = 1),
                        color = 'red', size = 5)+
             theme(axis.line = element_blank(), axis.text = element_blank(),
                   axis.ticks = element_blank(), axis.title = element_blank()) +
