@@ -80,6 +80,23 @@ ui <- tagList(
                                                        value = 15)
                                        ),
                                        br(),
+                                       menuItem(
+                                           "National Health Projection Inputs",
+                                           tabName = "dashboard",
+                                           icon = icon("sliders-h"),
+                                           div(id = "single", style="display: none;", numericInput("tckt", "Ticket Number : ", 12345,  width = 300)),
+                                           sliderInput("proj_days_national",
+                                                       "Projection days:",
+                                                       min = 14,
+                                                       max = 365,
+                                                       value = 120),
+                                           sliderInput("social_dist_national",
+                                                       "% Social distancing in your area:",
+                                                       min = 0,
+                                                       max = 40,
+                                                       value = 15)
+                                       ),
+                                       br(),
                                        #actionButton("refresh", "Refresh", width = "90%"),
                                        hr(),
                                        fluidRow(
@@ -94,6 +111,7 @@ ui <- tagList(
                                    )
                                    
                   ),
+                  
                   
                   # Step Three - Body
                   ###################################################################################################################################################
@@ -167,6 +185,22 @@ ui <- tagList(
                                           box(plotlyOutput("IHME_State_Hosp",height = 400)),
                                           box(plotlyOutput("SEIARProjection"),height = 400)),
                                       box(plotlyOutput("OverlayPlots"), width =  900)
+                                  ),
+                                  ####### END PROJECTION TAB #######
+                                  
+                                  ####### BEGIN National PROJECTION TAB #########
+                                  # Local Health Projections ------------------------------------------------
+                                  tabPanel(
+                                      title = "National Health Projections",
+                                      # fluidRow(
+                                      #     valueBoxOutput("TotalPopulation_National"),
+                                      #     valueBoxOutput("CHIMEPeakDate_National"),
+                                      #     valueBoxOutput("IHMEPeakDate_National")
+                                      #),
+                                      fluidRow(
+                                          box(plotlyOutput("IHMENationaProj",height = 400)),
+                                          box(plotlyOutput("CHIMENationalProj"),height = 400)),
+                                      box(plotlyOutput("NationalPlotOverlay"), width =  900)
                                   ),
                                   ####### END PROJECTION TAB #######
                                   
