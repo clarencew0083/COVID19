@@ -29,6 +29,8 @@ ui <- tagList(
                                   dropdownMenu(
                                       headerText = "Want to know more?",
                                       icon = icon("info-circle"),
+                                      tags$li(actionLink("overviewInfo", label = "Overview", icon = icon("globe")),
+                                              class = "dropdown"),
                                       tags$li(actionLink("inputInfo", label = "User Inputs", icon = icon("sliders-h")),
                                               class = "dropdown"),
                                       tags$li(actionLink("calcInfo", label = "Calculations", icon = icon("calculator")),

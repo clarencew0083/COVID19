@@ -357,7 +357,15 @@ server <- function(input, output) {
     # Step Three
     ###################################################################################################################################################
     
-    #Step three provides input information for annotation of the overall app such as inputs, sources, and calculations. 
+    #Step three provides input information for annotation of the overall app such as inputs, sources, and calculations.
+    observeEvent(input$overviewInfo, {
+        showModal(
+            modalDialog(
+                size = "l",fade = TRUE, easyClose = TRUE, title = "OVERVIEW",
+                OverviewLink)
+        )
+    })
+    
     observeEvent(input$inputInfo, {
         showModal(
             modalDialog(
@@ -365,6 +373,7 @@ server <- function(input, output) {
                 InfoLink)
         )
     })
+    
     observeEvent(input$calcInfo, {
         showModal(
             modalDialog(
@@ -379,6 +388,7 @@ server <- function(input, output) {
                 SourceLink)
         )
     })
+
     
     
     
