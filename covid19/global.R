@@ -323,7 +323,7 @@ CovidCasesPerDayChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHo
     n<-as.numeric(length(CovidCountiesCases))
     VectDailyCovid<-colSums(CovidCountiesCases[,29:n])
     DailyNewCases<-VectDailyCovid[2:length(VectDailyCovid)] -
-                   VectDailyCovid[1:(length(VectDailyCovid)-1)]
+        VectDailyCovid[1:(length(VectDailyCovid)-1)]
     
     #Estimation for new hospitalizations
     DailyNewHospitalizations<-ceiling(DailyNewCases*.1)
@@ -332,7 +332,7 @@ CovidCasesPerDayChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHo
     CovidCountiesDeath<-subset(CovidDeaths, CountyFIPS %in% IncludedCounties$FIPS)
     VectDailyDeaths<-colSums(CovidCountiesDeath[29:ncol(CovidCountiesDeath)])
     DailyNewDeaths<-VectDailyDeaths[2:length(VectDailyDeaths)] -
-                    VectDailyDeaths[1:(length(VectDailyDeaths)-1)]
+        VectDailyDeaths[1:(length(VectDailyDeaths)-1)]
     
     #Clean up the dataset to prepare for plotting
     ForecastDate<- seq(as.Date("2020-02-17"), length=(length(DailyNewDeaths)), by="1 day")
@@ -342,12 +342,12 @@ CovidCasesPerDayChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHo
     
     #Plot for local area daily cases, hospitalizations, and deaths
     p1 <- ggplot(Chart1DataSub) + 
-          geom_line(aes(x=ForecastDate, y=value, colour = variable), size = 0.5) +
-          scale_colour_manual(values=c("Blue", "Orange", "Red")) +
-          xlab('Date') +
-          ylab('Number of People') +
-          theme_bw() + 
-          theme(plot.title = element_text(face = "bold", size = 15, family = "sans"),
+        geom_line(aes(x=ForecastDate, y=value, colour = variable), size = 0.5) +
+        scale_colour_manual(values=c("Blue", "Orange", "Red")) +
+        xlab('Date') +
+        ylab('Number of People') +
+        theme_bw() + 
+        theme(plot.title = element_text(face = "bold", size = 15, family = "sans"),
               axis.title = element_text(face = "bold", size = 11, family = "sans"),
               axis.text.x = element_text(angle = 60, hjust = 1), 
               axis.line = element_line(color = "black"),
@@ -356,9 +356,9 @@ CovidCasesPerDayChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHo
               panel.grid.major = element_blank(),
               panel.grid.minor = element_blank(),
               panel.border = element_blank()) +
-          scale_x_date(date_breaks = "1 week") +
-          labs(color='')
-          
+        scale_x_date(date_breaks = "1 week") +
+        labs(color='')
+    
     ggplotly(p1)
 }
 
@@ -386,7 +386,7 @@ CovidCasesCumChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHospi
     
     #Plot for local area cumulative cases
     p2 <- ggplot(Chart2DataSub,height = 250) + 
-          geom_line(aes(x=ForecastDate, y=value, colour = variable), size = 0.5) +
+        geom_line(aes(x=ForecastDate, y=value, colour = variable), size = 0.5) +
         scale_colour_manual(values=c("Blue", "Orange", "Red"))+
         xlab('Date') +
         ylab('Number of People') +
@@ -401,7 +401,7 @@ CovidCasesCumChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHospi
               panel.grid.minor = element_blank(),
               panel.border = element_blank()) +
         scale_x_date(date_breaks = "1 week")
-        labs(color='')
+    labs(color='')
     
     ggplotly(p2)
 }
@@ -411,9 +411,9 @@ CovidCasesCumChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHospi
 #Use army models to create projections for the local area around the base
 #Establish function for army SEIAR model. This allows us to pass though a simple function to gather all statistics when we plot
 SEIAR_Model_Run<-function(num_init_cases, Pop.At.Risk, incub_period, latent_period, 
-                    doubling, recovery_days, social_rate, hospital_rate,
-                    icu_rate, ventilated_rate, hospital_dur, icu_dur, ventilated_dur, n_days, 
-                    secondary_cases = 2.5, distribution_e_to_a = 0.5){
+                          doubling, recovery_days, social_rate, hospital_rate,
+                          icu_rate, ventilated_rate, hospital_dur, icu_dur, ventilated_dur, n_days, 
+                          secondary_cases = 2.5, distribution_e_to_a = 0.5){
     
     ###DEFINING COMPARTMENTS OF THE MODEL
     total_infections <- num_init_cases / (hospital_rate/100) 
@@ -576,8 +576,8 @@ seiar<-function(S,E,A,I,R, beta, sigma, gamma_1, gamma_2, N){
 
 
 SIR_Model_Run<-function(num_init_cases, Pop.At.Risk, detect_prob, 
-         doubling, recovery_days, social_rate, hospital_rate,
-         icu_rate, ventilated_rate, hospital_dur, icu_dur, ventilated_dur, n_days){
+                        doubling, recovery_days, social_rate, hospital_rate,
+                        icu_rate, ventilated_rate, hospital_dur, icu_dur, ventilated_dur, n_days){
     #create parameters for model
     total_infections <- num_init_cases / (hospital_rate/100)
     I <- total_infections / (detect_prob / 100) 
@@ -827,7 +827,7 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
     daysforecasted<-DaysProjected
     
     
-
+    
     #Now we throw the values above into the SEIAR model, and we create dates for the number of days we decided to forecast as well (place holder for now).
     #With the outputs, we grab the daily hospitalized people and the cumulative hospitalizations. Then we name the columns
     SEIARProj<-SEIAR_Model_Run(cases, pop, incubationtime, latenttime,doubling,recoverydays, 

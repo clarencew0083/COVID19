@@ -235,7 +235,7 @@ server <- function(input, output) {
         MyCounties<-GetCounties()
         PlotLocalChoro(MyCounties, input$Base, input$TypeLocal)
     })
-
+    
     
     
     
@@ -298,8 +298,8 @@ server <- function(input, output) {
         ggplotly(r1)
     })
     
-
-#Output the SEIAR CHIME projections with a max, min, and expected value
+    
+    #Output the SEIAR CHIME projections with a max, min, and expected value
     output$SEIARProjection<-renderPlotly({
         BaseState<-dplyr::filter(AFBaseLocations, Base == input$Base)
         IncludedCounties<-GetCounties()
@@ -343,13 +343,13 @@ server <- function(input, output) {
         icutime<-4
         ventilatortime<-7
         daysforecasted<-input$proj_days
-
+        
         
         #Now we throw the values above into the SEIAR model, and we create dates for the number of days we decided to forecast as well (place holder for now).
         #With the outputs, we grab the daily hospitalized people and the cumulative hospitalizations. Then we name the columns
         SEIARProj<-SEIAR_Model_Run(cases, pop, incubationtime, latenttime,doubling,recoverydays,
-                                 socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,
-                                 ventilatortime,daysforecasted,Ro, .5)
+                                   socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,
+                                   ventilatortime,daysforecasted,Ro, .5)
         
         MyDates<-seq(Sys.Date()-(length(CovidCounties)-65), length=daysforecasted, by="1 day")
         DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
@@ -385,8 +385,8 @@ server <- function(input, output) {
         #Now we throw the values above into the SEIAR model, and we create dates for the number of days we decided to forecast as well (place holder for now).
         #With the outputs, we grab the daily hospitalized people and the cumulative hospitalizations. Then we name the columns
         SEIARProj<-SEIAR_Model_Run(cases, pop, incubationtime, latenttime,doubling,recoverydays, 
-                                 socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,
-                                 icutime,ventilatortime,daysforecasted,Ro, .5)
+                                   socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,
+                                   icutime,ventilatortime,daysforecasted,Ro, .5)
         
         DailyData<-data.frame(DailyData, SEIARProj$sir$hos_add)
         TotalData<-data.frame(TotalData, SEIARProj$sir$hos_cum)
@@ -419,9 +419,9 @@ server <- function(input, output) {
         #Now we throw the values above into the SEIAR model, and we create dates for the number of days we decided to forecast as well (place holder for now).
         #With the outputs, we grab the daily hospitalized people and the cumulative hospitalizations. Then we name the columns
         SEIARProj<-SEIAR_Model_Run(cases, pop, incubationtime, latenttime,doubling,recoverydays,
-                                 socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,
-                                 icutime,ventilatortime,daysforecasted,Ro, .5)
-
+                                   socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,
+                                   icutime,ventilatortime,daysforecasted,Ro, .5)
+        
         DailyData<-data.frame(DailyData, SEIARProj$sir$hos_add)
         TotalData<-data.frame(TotalData, SEIARProj$sir$hos_cum)
         colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases","Minimum Daily Cases","Maximum Daily Cases")
@@ -459,14 +459,14 @@ server <- function(input, output) {
                   panel.grid.minor = element_blank(),
                   panel.border = element_blank()) +
             scale_x_date(date_breaks = "2 week")
-            labs(color='')
+        labs(color='')
         
         ggplotly(projections)
         
         
     })
     
-#Overlay Projected Plots
+    #Overlay Projected Plots
     output$OverlayPlots<-renderPlotly({
         MyCounties<-GetCounties()
         MyHospitals<-GetHospitals()
@@ -532,6 +532,3 @@ server <- function(input, output) {
     
     
 }
-
-
-
