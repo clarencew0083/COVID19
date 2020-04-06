@@ -178,7 +178,7 @@ server <- function(input, output) {
     
     output$IHMEPeakDate<-renderValueBox({
         MyHospitals<-GetHospitals()
-        Peak<-CalculateIHMEPeak(input$Base, MyHospitals)
+        Peak<-CalculateIHMEPeak(input$Base, MyHospitals, input$Radius)
         Peak<-format(Peak,"%B %d")
         valueBox(subtitle = "IHME Predicted Peak Hospitalization Date",
                  paste(Peak),
@@ -244,11 +244,21 @@ server <- function(input, output) {
     
     #Create IHME plot by State projected hospitalization 
     output$IHME_State_Hosp<-renderPlotly({
+        
         #Creating the stats and dataframes determined by the base we choose to look at.
         BaseState<-dplyr::filter(AFBaseLocations, Base == input$Base)
         IncludedHospitals<-GetHospitals()
         IHME_State <- dplyr::filter(IHME_Model, State == toString(BaseState$State[1]))
         TotalBedsCounty <- sum(IncludedHospitals$BEDS)
+        
+        #Get regional and state populations
+        MyCounties <- GetCounties()
+        StPopList <- dplyr::filter(CountyInfo, State == toString(BaseState$State[1]))
+        RegPop <- sum(MyCounties$Population)
+        StPop <- sum(StPopList$Population)
+        
+        # Use Population ratio to scale IHME
+        PopRatio <- RegPop/StPop
         
         # Get total hospital bed number across state
         IncludedHospitalsST <- dplyr::filter(HospitalInfo, STATE == toString(BaseState$State[1]))
@@ -259,13 +269,18 @@ server <- function(input, output) {
         
         # Apply ratio's to IHME data
         IHME_Region <- IHME_State
-        IHME_Region$allbed_mean = round(IHME_State$allbed_mean*BedProp)
-        IHME_Region$allbed_lower = round(IHME_State$allbed_lower*BedProp)
-        IHME_Region$allbed_upper = round(IHME_State$allbed_upper*BedProp)
+        IHME_Region$allbed_mean = round(IHME_State$allbed_mean*PopRatio)
+        IHME_Region$allbed_lower = round(IHME_State$allbed_lower*PopRatio)
+        IHME_Region$allbed_upper = round(IHME_State$allbed_upper*PopRatio)
+        
+        
         
         r1 <- ggplot(data=IHME_Region, aes(x=date, y=allbed_mean, ymin=allbed_lower, ymax=allbed_upper)) +
             geom_line(linetype = "dashed", size = 0.75) +
             geom_ribbon(alpha=0.3, fill = "tan3") + 
+            # geom_hline(yintercept = TotalBedsCounty,
+            #            linetype = "solid",
+            #            color = "red") +
             labs(title = paste("IHME Hospitalization Projections for Selected Region"),
                  x = "Date", y = "Projected Daily Hospitalizations") +
             theme_bw() +

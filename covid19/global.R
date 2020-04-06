@@ -79,16 +79,9 @@ colnames(CovidConfirmedCases)[1]<-"CountyFIPS"
 #Read in IHME data for projecting data in the future
 temp <- tempfile()
 download.file("https://ihmecovid19storage.blob.core.windows.net/latest/ihme-covid19.zip", temp, mode="wb")
-# filename = paste(format(as.Date(Sys.Date()-3), "%Y"), "_",
-#                  format(as.Date(Sys.Date()-3), "%m"), "_",
-#                  format(as.Date(Sys.Date()-3), "%d"), ".2",
-#                  "/Hospitalization_all_locs.csv",
-#                  sep = "")
-
 zipdf <- unzip(temp, list = TRUE)
 csv_file <- zipdf$Name[2]
 IHME_Model <- read.csv(csv_file)
-#IHME_Model <- read.csv(filename)
 unlink(temp)
 IHME_Model$date <- as.Date(IHME_Model$date, format = "%Y-%m-%d")
 StateList <- data.frame(state.name, state.abb)
@@ -280,11 +273,22 @@ CalculateCHIMEPeak<-function(IncludedCounties, ChosenBase, ChosenRadius, SocialD
     DailyData[Date,1]
 }
 
-CalculateIHMEPeak<-function(ChosenBase, IncludedHospitals){
+CalculateIHMEPeak<-function(ChosenBase, IncludedHospitals, radius){
+    
     #Creating the stats and dataframes determined by the base we choose to look at.
     BaseState<-dplyr::filter(AFBaseLocations, Base == ChosenBase)
     IHME_State <- dplyr::filter(IHME_Model, State == toString(BaseState$State[1]))
     TotalBedsCounty <- sum(IncludedHospitals$BEDS)
+    
+    #Get regional and state populations
+    CountyInfo$DistanceMiles = cimd[,as.character(ChosenBase)]
+    IncludedCounties <- dplyr::filter(CountyInfo, DistanceMiles <= radius)
+    StPopList <- dplyr::filter(CountyInfo, State == toString(BaseState$State[1]))
+    RegPop <- sum(IncludedCounties$Population)
+    StPop <- sum(StPopList$Population)
+    
+    # Use Population ratio to scale IHME
+    PopRatio <- RegPop/StPop
     
     # Get total hospital bed number across state
     IncludedHospitalsST <- dplyr::filter(HospitalInfo, STATE == toString(BaseState$State[1]))
@@ -295,7 +299,7 @@ CalculateIHMEPeak<-function(ChosenBase, IncludedHospitals){
     
     # Apply ratio's to IHME data
     IHME_Region <- IHME_State
-    IHME_Region$allbed_mean = round(IHME_State$allbed_mean*BedProp)
+    IHME_Region$allbed_mean = round(IHME_State$allbed_mean*PopRatio)
     IHME_Data<-data.frame(IHME_Region$date,IHME_Region$allbed_mean)
     
     PeakDate<-which.max(IHME_Data$IHME_Region.allbed_mean)
@@ -718,9 +722,16 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
     
     #Creating the stats and dataframes determined by the base we choose to look at.
     BaseState<-dplyr::filter(AFBaseLocations, Base == ChosenBase)
-    #IncludedHospitals<-GetHospitals()
     IHME_State <- dplyr::filter(IHME_Model, State == toString(BaseState$State[1]))
     TotalBedsCounty <- sum(IncludedHospitals$BEDS)
+    
+    #Get regional and state populations
+    StPopList <- dplyr::filter(CountyInfo, State == toString(BaseState$State[1]))
+    RegPop <- sum(IncludedCounties$Population)
+    StPop <- sum(StPopList$Population)
+    
+    # Use Population ratio to scale IHME
+    PopRatio <- RegPop/StPop
     
     # Get total hospital bed number across state
     IncludedHospitalsST <- dplyr::filter(HospitalInfo, STATE == toString(BaseState$State[1]))
@@ -731,9 +742,9 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
     
     # Apply ratio's to IHME data
     IHME_Region <- IHME_State
-    IHME_Region$allbed_mean = round(IHME_State$allbed_mean*BedProp)
-    IHME_Region$allbed_lower = round(IHME_State$allbed_lower*BedProp)
-    IHME_Region$allbed_upper = round(IHME_State$allbed_upper*BedProp)
+    IHME_Region$allbed_mean = round(IHME_State$allbed_mean*PopRatio)
+    IHME_Region$allbed_lower = round(IHME_State$allbed_lower*PopRatio)
+    IHME_Region$allbed_upper = round(IHME_State$allbed_upper*PopRatio)
     IHME_Data<-data.frame(IHME_Region$date,IHME_Region$allbed_mean, IHME_Region$allbed_lower, IHME_Region$allbed_upper)
     
     BaseState<-dplyr::filter(AFBaseLocations, Base == ChosenBase)
