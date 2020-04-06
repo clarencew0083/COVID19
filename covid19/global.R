@@ -1037,7 +1037,7 @@ NationalOverlayPlot<-function(SocialDistance, DaysForecasted){
                                socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,
                                ventilatortime,daysforecasted,Ro, .5)
     
-    MyDates<-seq(Sys.Date()-(length(CovidCounties)-65), length=daysforecasted, by="1 day")
+    MyDates<-seq(Sys.Date()-(length(CovidConfirmedCases)-65), length=daysforecasted, by="1 day")
     DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
     TotalData<-data.frame(MyDates, SEIARProj$sir$hos_cum)
     colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases")
@@ -1187,7 +1187,7 @@ CHIMENationalPlot<-function(SocialDistance, DaysForecasted){
                                socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,
                                ventilatortime,daysforecasted,Ro, .5)
     
-    MyDates<-seq(Sys.Date()-(length(CovidCounties)-65), length=daysforecasted, by="1 day")
+    MyDates<-seq(Sys.Date()-(length(CovidConfirmedCases)-65), length=daysforecasted, by="1 day")
     DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
     TotalData<-data.frame(MyDates, SEIARProj$sir$hos_cum)
     colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases")
@@ -1344,7 +1344,7 @@ IHMENationalProjections<-function(){
 
 
 
-CHIMELocalPlot<-function(SocialDistance, ForecastedDays){
+CHIMELocalPlot<-function(SocialDistance, ForecastedDays, IncludedCounties){
     
 #Get data for counties with covid cases. We want number of cases, the rate of the cases and maybe other data.
 #We include State, county, population in those counties, cases, fatalities, doubling rate

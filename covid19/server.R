@@ -303,10 +303,11 @@ server <- function(input, output) {
     output$SEIARProjection<-renderPlotly({
         BaseState<-dplyr::filter(AFBaseLocations, Base == input$Base)
         IncludedCounties<-GetCounties()
-        CHIMELocalPlot(input$social_dist, input$proj_days)
+        CHIMELocalPlot(input$social_dist, input$proj_days, IncludedCounties)
     })
     
     output$CHIMENationalProj<-renderPlotly({
+        
         CHIMENationalPlot(input$social_dist_national, input$proj_days_national)
     })
     
@@ -315,6 +316,7 @@ server <- function(input, output) {
     })
     
     output$IHMENationaProj<-renderPlotly({
+        
         IHMENationalProjections()
     })
     
