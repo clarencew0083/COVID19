@@ -1145,7 +1145,8 @@ NationalOverlayPlot<-function(SocialDistance, DaysForecasted){
               panel.grid.minor = element_blank(),
               panel.border = element_blank()) +
         scale_x_date(date_breaks = "2 week")+
-        labs(color = "ID")
+        labs(color = "ID")+
+        scale_y_continuous(labels = comma)
     
     
     ggplotly(projections)
@@ -1293,7 +1294,8 @@ CHIMENationalPlot<-function(SocialDistance, DaysForecasted){
               panel.grid.minor = element_blank(),
               panel.border = element_blank()) +
         scale_x_date(date_breaks = "3 week")+
-        labs(color='')
+        labs(color='')+
+        scale_y_continuous(labels = comma)
     
     
     ggplotly(projections)
@@ -1336,7 +1338,8 @@ IHMENationalProjections<-function(){
               panel.grid.minor = element_blank(),
               panel.border = element_blank()) +
         scale_x_date(date_breaks = "2 week")+
-        labs(color='')
+        labs(color='')+
+        scale_y_continuous(labels = comma)
     
     
     ggplotly(projections)
