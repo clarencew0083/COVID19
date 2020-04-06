@@ -913,6 +913,8 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
 }
 
 
+
+
 # Create data tables for analysis ---------------------------------------------------------------------------------------------------------------------------------------------------
 
 #Create Data Table for local statistics
@@ -1381,14 +1383,14 @@ Ro<-2.5
 incubationtime<-5
 latenttime<-2
 recoverydays<-14
-socialdistancing<-16
+socialdistancing<-SocialDistance
 hospitalizationrate<-5
 icurate<-6
 ventilatorrate<-3
 hospitaltime<-3.5
 icutime<-4
 ventilatortime<-7
-daysforecasted<-180
+daysforecasted<-ForecastedDays
 
 
 #Now we throw the values above into the SEIAR model, and we create dates for the number of days we decided to forecast as well (place holder for now).
