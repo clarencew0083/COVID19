@@ -76,24 +76,17 @@ CovidDeaths[is.na(CovidDeaths)]<-0
 colnames(CovidConfirmedCases)[1]<-"CountyFIPS"
 
 
-#Read in IHME data for projecting data in the future
-temp <- tempfile()
-download.file("https://ihmecovid19storage.blob.core.windows.net/latest/ihme-covid19.zip", temp, mode="wb")
-# filename = paste(format(as.Date(Sys.Date()-3), "%Y"), "_",
-#                  format(as.Date(Sys.Date()-3), "%m"), "_",
-#                  format(as.Date(Sys.Date()-3), "%d"), ".2",
-#                  "/Hospitalization_all_locs.csv",
-#                  sep = "")
-
-zipdf <- unzip(temp, list = TRUE)
-csv_file <- zipdf$Name[2]
-IHME_Model <- read.csv(csv_file)
-#IHME_Model <- read.csv(filename)
-unlink(temp)
-IHME_Model$date <- as.Date(IHME_Model$date, format = "%Y-%m-%d")
-StateList <- data.frame(state.name, state.abb)
-IHME_Model <- merge(IHME_Model, StateList, by.x = "location", by.y = names(StateList)[1])
-names(IHME_Model)[names(IHME_Model)=="state.abb"] <- "State"
+# #Read in IHME data for projecting data in the future
+# temp <- tempfile()
+# download.file("https://ihmecovid19storage.blob.core.windows.net/latest/ihme-covid19.zip", temp, mode="wb")
+# zipdf <- unzip(temp, list = TRUE)
+# csv_file <- zipdf$Name[2]
+# IHME_Model <- read.csv(csv_file)
+# unlink(temp)
+# IHME_Model$date <- as.Date(IHME_Model$date, format = "%Y-%m-%d")
+# StateList <- data.frame(state.name, state.abb)
+# IHME_Model <- merge(IHME_Model, StateList, by.x = "location", by.y = names(StateList)[1])
+# names(IHME_Model)[names(IHME_Model)=="state.abb"] <- "State"
 
 
 #Create list of hospitals, bases, and counties.
@@ -217,7 +210,7 @@ HospitalIncreases<-function(ChosenBase, Radius, IncludedCounties, IncludedHospit
     TotalHospital<-sum(CovidCounties[,ncol(CovidCounties)])
     NotHospital<-sum(rev(CovidCounties)[,7])
     StillHospital<-ceiling((TotalHospital-NotHospital))
-    Upper<- round(((StillHospital+changeC*.1)/TotalBeds+.6)*100,1)
+    Upper<- round(((StillHospital+changeC*.1)/TotalBeds+.5)*100,1)
     #Lower<- round(((StillHospital+changeC*.207)/TotalBeds+.55)*100,1)
     paste(Upper," %", sep = "") 
 }
@@ -280,11 +273,22 @@ CalculateCHIMEPeak<-function(IncludedCounties, ChosenBase, ChosenRadius, SocialD
     DailyData[Date,1]
 }
 
-CalculateIHMEPeak<-function(ChosenBase, IncludedHospitals){
+CalculateIHMEPeak<-function(ChosenBase, IncludedHospitals, radius){
+    
     #Creating the stats and dataframes determined by the base we choose to look at.
     BaseState<-dplyr::filter(AFBaseLocations, Base == ChosenBase)
     IHME_State <- dplyr::filter(IHME_Model, State == toString(BaseState$State[1]))
     TotalBedsCounty <- sum(IncludedHospitals$BEDS)
+    
+    #Get regional and state populations
+    CountyInfo$DistanceMiles = cimd[,as.character(ChosenBase)]
+    IncludedCounties <- dplyr::filter(CountyInfo, DistanceMiles <= radius)
+    StPopList <- dplyr::filter(CountyInfo, State == toString(BaseState$State[1]))
+    RegPop <- sum(IncludedCounties$Population)
+    StPop <- sum(StPopList$Population)
+    
+    # Use Population ratio to scale IHME
+    PopRatio <- RegPop/StPop
     
     # Get total hospital bed number across state
     IncludedHospitalsST <- dplyr::filter(HospitalInfo, STATE == toString(BaseState$State[1]))
@@ -295,7 +299,7 @@ CalculateIHMEPeak<-function(ChosenBase, IncludedHospitals){
     
     # Apply ratio's to IHME data
     IHME_Region <- IHME_State
-    IHME_Region$allbed_mean = round(IHME_State$allbed_mean*BedProp)
+    IHME_Region$allbed_mean = round(IHME_State$allbed_mean*PopRatio)
     IHME_Data<-data.frame(IHME_Region$date,IHME_Region$allbed_mean)
     
     PeakDate<-which.max(IHME_Data$IHME_Region.allbed_mean)
@@ -319,7 +323,7 @@ CovidCasesPerDayChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHo
     n<-as.numeric(length(CovidCountiesCases))
     VectDailyCovid<-colSums(CovidCountiesCases[,29:n])
     DailyNewCases<-VectDailyCovid[2:length(VectDailyCovid)] -
-                   VectDailyCovid[1:(length(VectDailyCovid)-1)]
+        VectDailyCovid[1:(length(VectDailyCovid)-1)]
     
     #Estimation for new hospitalizations
     DailyNewHospitalizations<-ceiling(DailyNewCases*.1)
@@ -328,7 +332,7 @@ CovidCasesPerDayChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHo
     CovidCountiesDeath<-subset(CovidDeaths, CountyFIPS %in% IncludedCounties$FIPS)
     VectDailyDeaths<-colSums(CovidCountiesDeath[29:ncol(CovidCountiesDeath)])
     DailyNewDeaths<-VectDailyDeaths[2:length(VectDailyDeaths)] -
-                    VectDailyDeaths[1:(length(VectDailyDeaths)-1)]
+        VectDailyDeaths[1:(length(VectDailyDeaths)-1)]
     
     #Clean up the dataset to prepare for plotting
     ForecastDate<- seq(as.Date("2020-02-17"), length=(length(DailyNewDeaths)), by="1 day")
@@ -338,12 +342,12 @@ CovidCasesPerDayChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHo
     
     #Plot for local area daily cases, hospitalizations, and deaths
     p1 <- ggplot(Chart1DataSub) + 
-          geom_line(aes(x=ForecastDate, y=value, colour = variable), size = 0.5) +
-          scale_colour_manual(values=c("Blue", "Orange", "Red")) +
-          xlab('Date') +
-          ylab('Number of People') +
-          theme_bw() + 
-          theme(plot.title = element_text(face = "bold", size = 15, family = "sans"),
+        geom_line(aes(x=ForecastDate, y=value, colour = variable), size = 0.5) +
+        scale_colour_manual(values=c("Blue", "Orange", "Red")) +
+        xlab('Date') +
+        ylab('Number of People') +
+        theme_bw() + 
+        theme(plot.title = element_text(face = "bold", size = 15, family = "sans"),
               axis.title = element_text(face = "bold", size = 11, family = "sans"),
               axis.text.x = element_text(angle = 60, hjust = 1), 
               axis.line = element_line(color = "black"),
@@ -352,9 +356,9 @@ CovidCasesPerDayChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHo
               panel.grid.major = element_blank(),
               panel.grid.minor = element_blank(),
               panel.border = element_blank()) +
-          scale_x_date(date_breaks = "1 week") +
-          labs(color='')
-          
+        scale_x_date(date_breaks = "1 week") +
+        labs(color='')
+    
     ggplotly(p1)
 }
 
@@ -382,7 +386,7 @@ CovidCasesCumChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHospi
     
     #Plot for local area cumulative cases
     p2 <- ggplot(Chart2DataSub,height = 250) + 
-          geom_line(aes(x=ForecastDate, y=value, colour = variable), size = 0.5) +
+        geom_line(aes(x=ForecastDate, y=value, colour = variable), size = 0.5) +
         scale_colour_manual(values=c("Blue", "Orange", "Red"))+
         xlab('Date') +
         ylab('Number of People') +
@@ -397,7 +401,7 @@ CovidCasesCumChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHospi
               panel.grid.minor = element_blank(),
               panel.border = element_blank()) +
         scale_x_date(date_breaks = "1 week")
-        labs(color='')
+    labs(color='')
     
     ggplotly(p2)
 }
@@ -407,9 +411,9 @@ CovidCasesCumChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHospi
 #Use army models to create projections for the local area around the base
 #Establish function for army SEIAR model. This allows us to pass though a simple function to gather all statistics when we plot
 SEIAR_Model_Run<-function(num_init_cases, Pop.At.Risk, incub_period, latent_period, 
-                    doubling, recovery_days, social_rate, hospital_rate,
-                    icu_rate, ventilated_rate, hospital_dur, icu_dur, ventilated_dur, n_days, 
-                    secondary_cases = 2.5, distribution_e_to_a = 0.5){
+                          doubling, recovery_days, social_rate, hospital_rate,
+                          icu_rate, ventilated_rate, hospital_dur, icu_dur, ventilated_dur, n_days, 
+                          secondary_cases = 2.5, distribution_e_to_a = 0.5){
     
     ###DEFINING COMPARTMENTS OF THE MODEL
     total_infections <- num_init_cases / (hospital_rate/100) 
@@ -572,8 +576,8 @@ seiar<-function(S,E,A,I,R, beta, sigma, gamma_1, gamma_2, N){
 
 
 SIR_Model_Run<-function(num_init_cases, Pop.At.Risk, detect_prob, 
-         doubling, recovery_days, social_rate, hospital_rate,
-         icu_rate, ventilated_rate, hospital_dur, icu_dur, ventilated_dur, n_days){
+                        doubling, recovery_days, social_rate, hospital_rate,
+                        icu_rate, ventilated_rate, hospital_dur, icu_dur, ventilated_dur, n_days){
     #create parameters for model
     total_infections <- num_init_cases / (hospital_rate/100)
     I <- total_infections / (detect_prob / 100) 
@@ -718,9 +722,16 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
     
     #Creating the stats and dataframes determined by the base we choose to look at.
     BaseState<-dplyr::filter(AFBaseLocations, Base == ChosenBase)
-    #IncludedHospitals<-GetHospitals()
     IHME_State <- dplyr::filter(IHME_Model, State == toString(BaseState$State[1]))
     TotalBedsCounty <- sum(IncludedHospitals$BEDS)
+    
+    #Get regional and state populations
+    StPopList <- dplyr::filter(CountyInfo, State == toString(BaseState$State[1]))
+    RegPop <- sum(IncludedCounties$Population)
+    StPop <- sum(StPopList$Population)
+    
+    # Use Population ratio to scale IHME
+    PopRatio <- RegPop/StPop
     
     # Get total hospital bed number across state
     IncludedHospitalsST <- dplyr::filter(HospitalInfo, STATE == toString(BaseState$State[1]))
@@ -731,9 +742,9 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
     
     # Apply ratio's to IHME data
     IHME_Region <- IHME_State
-    IHME_Region$allbed_mean = round(IHME_State$allbed_mean*BedProp)
-    IHME_Region$allbed_lower = round(IHME_State$allbed_lower*BedProp)
-    IHME_Region$allbed_upper = round(IHME_State$allbed_upper*BedProp)
+    IHME_Region$allbed_mean = round(IHME_State$allbed_mean*PopRatio)
+    IHME_Region$allbed_lower = round(IHME_State$allbed_lower*PopRatio)
+    IHME_Region$allbed_upper = round(IHME_State$allbed_upper*PopRatio)
     IHME_Data<-data.frame(IHME_Region$date,IHME_Region$allbed_mean, IHME_Region$allbed_lower, IHME_Region$allbed_upper)
     
     BaseState<-dplyr::filter(AFBaseLocations, Base == ChosenBase)
@@ -816,7 +827,7 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
     daysforecasted<-DaysProjected
     
     
-
+    
     #Now we throw the values above into the SEIAR model, and we create dates for the number of days we decided to forecast as well (place holder for now).
     #With the outputs, we grab the daily hospitalized people and the cumulative hospitalizations. Then we name the columns
     SEIARProj<-SEIAR_Model_Run(cases, pop, incubationtime, latenttime,doubling,recoverydays, 

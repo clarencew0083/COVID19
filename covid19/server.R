@@ -128,7 +128,7 @@ server <- function(input, output) {
         TotalHospital<-sum(CovidCounties[,ncol(CovidCounties)])
         NotHospital<-sum(rev(CovidCounties)[,7])
         StillHospital<-ceiling((TotalHospital-NotHospital))
-        Upper<- round(((StillHospital+changeC*.1)/TotalBeds+.6)*100,1)
+        Upper<- round(((StillHospital+changeC*.1)/TotalBeds+.5)*100,1)
         #Lower<- round(((StillHospital+changeC*.207)/TotalBeds+.55)*100,1)
         paste(Upper," %", sep = "") 
         
@@ -145,13 +145,13 @@ server <- function(input, output) {
         TotalHospital<-sum(rev(CovidCounties)[,1])
         NotHospital<-sum(rev(CovidCounties)[,6])
         StillHospital<-ceiling((TotalHospital-NotHospital))
-        Upper<-(signif(((StillHospital+changeC*.1)/TotalBeds+.6)*100,3))
+        Upper<-(signif(((StillHospital+changeC*.1)/TotalBeds+.5)*100,3))
         #Lower<-(signif(((StillHospital+changeC*.207)/TotalBeds+.6)*100,3))
         # Yesterday
         TotalHospitaly<-sum(CovidCounties[,ncol(CovidCounties)-1])
         NotHospitaly<-sum(CovidCounties[,n-1])
         StillHospitaly<-ceiling((TotalHospitaly-NotHospitaly))
-        Uppery<-(signif(((StillHospitaly+changey*.1)/TotalBeds+.6)*100,3))
+        Uppery<-(signif(((StillHospitaly+changey*.1)/TotalBeds+.5)*100,3))
         #Lowery<-(signif(((StillHospitaly+changey*.207)/TotalBeds+.6)*100,3))
         chng <- round((Upper-Uppery)/2, 1)
         
@@ -178,7 +178,7 @@ server <- function(input, output) {
     
     output$IHMEPeakDate<-renderValueBox({
         MyHospitals<-GetHospitals()
-        Peak<-CalculateIHMEPeak(input$Base, MyHospitals)
+        Peak<-CalculateIHMEPeak(input$Base, MyHospitals, input$Radius)
         Peak<-format(Peak,"%B %d")
         valueBox(subtitle = "IHME Predicted Peak Hospitalization Date",
                  paste(Peak),
@@ -235,7 +235,7 @@ server <- function(input, output) {
         MyCounties<-GetCounties()
         PlotLocalChoro(MyCounties, input$Base, input$TypeLocal)
     })
-
+    
     
     
     
@@ -244,11 +244,21 @@ server <- function(input, output) {
     
     #Create IHME plot by State projected hospitalization 
     output$IHME_State_Hosp<-renderPlotly({
+        
         #Creating the stats and dataframes determined by the base we choose to look at.
         BaseState<-dplyr::filter(AFBaseLocations, Base == input$Base)
         IncludedHospitals<-GetHospitals()
         IHME_State <- dplyr::filter(IHME_Model, State == toString(BaseState$State[1]))
         TotalBedsCounty <- sum(IncludedHospitals$BEDS)
+        
+        #Get regional and state populations
+        MyCounties <- GetCounties()
+        StPopList <- dplyr::filter(CountyInfo, State == toString(BaseState$State[1]))
+        RegPop <- sum(MyCounties$Population)
+        StPop <- sum(StPopList$Population)
+        
+        # Use Population ratio to scale IHME
+        PopRatio <- RegPop/StPop
         
         # Get total hospital bed number across state
         IncludedHospitalsST <- dplyr::filter(HospitalInfo, STATE == toString(BaseState$State[1]))
@@ -259,13 +269,18 @@ server <- function(input, output) {
         
         # Apply ratio's to IHME data
         IHME_Region <- IHME_State
-        IHME_Region$allbed_mean = round(IHME_State$allbed_mean*BedProp)
-        IHME_Region$allbed_lower = round(IHME_State$allbed_lower*BedProp)
-        IHME_Region$allbed_upper = round(IHME_State$allbed_upper*BedProp)
+        IHME_Region$allbed_mean = round(IHME_State$allbed_mean*PopRatio)
+        IHME_Region$allbed_lower = round(IHME_State$allbed_lower*PopRatio)
+        IHME_Region$allbed_upper = round(IHME_State$allbed_upper*PopRatio)
+        
+        
         
         r1 <- ggplot(data=IHME_Region, aes(x=date, y=allbed_mean, ymin=allbed_lower, ymax=allbed_upper)) +
             geom_line(linetype = "dashed", size = 0.75) +
             geom_ribbon(alpha=0.3, fill = "tan3") + 
+            geom_hline(yintercept = TotalBedsCounty * 0.5,
+                       linetype = "solid",
+                       color = "red") +
             labs(title = paste("IHME Hospitalization Projections for Selected Region"),
                  x = "Date", y = "Projected Daily Hospitalizations") +
             theme_bw() +
@@ -283,8 +298,8 @@ server <- function(input, output) {
         ggplotly(r1)
     })
     
-
-#Output the SEIAR CHIME projections with a max, min, and expected value
+    
+    #Output the SEIAR CHIME projections with a max, min, and expected value
     output$SEIARProjection<-renderPlotly({
         BaseState<-dplyr::filter(AFBaseLocations, Base == input$Base)
         IncludedCounties<-GetCounties()
@@ -328,13 +343,13 @@ server <- function(input, output) {
         icutime<-4
         ventilatortime<-7
         daysforecasted<-input$proj_days
-
+        
         
         #Now we throw the values above into the SEIAR model, and we create dates for the number of days we decided to forecast as well (place holder for now).
         #With the outputs, we grab the daily hospitalized people and the cumulative hospitalizations. Then we name the columns
         SEIARProj<-SEIAR_Model_Run(cases, pop, incubationtime, latenttime,doubling,recoverydays,
-                                 socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,
-                                 ventilatortime,daysforecasted,Ro, .5)
+                                   socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,
+                                   ventilatortime,daysforecasted,Ro, .5)
         
         MyDates<-seq(Sys.Date()-(length(CovidCounties)-65), length=daysforecasted, by="1 day")
         DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
@@ -370,8 +385,8 @@ server <- function(input, output) {
         #Now we throw the values above into the SEIAR model, and we create dates for the number of days we decided to forecast as well (place holder for now).
         #With the outputs, we grab the daily hospitalized people and the cumulative hospitalizations. Then we name the columns
         SEIARProj<-SEIAR_Model_Run(cases, pop, incubationtime, latenttime,doubling,recoverydays, 
-                                 socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,
-                                 icutime,ventilatortime,daysforecasted,Ro, .5)
+                                   socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,
+                                   icutime,ventilatortime,daysforecasted,Ro, .5)
         
         DailyData<-data.frame(DailyData, SEIARProj$sir$hos_add)
         TotalData<-data.frame(TotalData, SEIARProj$sir$hos_cum)
@@ -404,9 +419,9 @@ server <- function(input, output) {
         #Now we throw the values above into the SEIAR model, and we create dates for the number of days we decided to forecast as well (place holder for now).
         #With the outputs, we grab the daily hospitalized people and the cumulative hospitalizations. Then we name the columns
         SEIARProj<-SEIAR_Model_Run(cases, pop, incubationtime, latenttime,doubling,recoverydays,
-                                 socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,
-                                 icutime,ventilatortime,daysforecasted,Ro, .5)
-
+                                   socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,
+                                   icutime,ventilatortime,daysforecasted,Ro, .5)
+        
         DailyData<-data.frame(DailyData, SEIARProj$sir$hos_add)
         TotalData<-data.frame(TotalData, SEIARProj$sir$hos_cum)
         colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases","Minimum Daily Cases","Maximum Daily Cases")
@@ -444,14 +459,14 @@ server <- function(input, output) {
                   panel.grid.minor = element_blank(),
                   panel.border = element_blank()) +
             scale_x_date(date_breaks = "2 week")
-            labs(color='')
+        labs(color='')
         
         ggplotly(projections)
         
         
     })
     
-#Overlay Projected Plots
+    #Overlay Projected Plots
     output$OverlayPlots<-renderPlotly({
         MyCounties<-GetCounties()
         MyHospitals<-GetHospitals()
@@ -517,6 +532,3 @@ server <- function(input, output) {
     
     
 }
-
-
-

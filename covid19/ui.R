@@ -60,7 +60,7 @@ ui <- tagList(
                                            div(id = "single", style="display: none;", numericInput("tckt", "Ticket Number : ", 12345,  width = 300)),
                                            radioButtons("TypeLocal", "State or County Plot:",
                                                         c("County"="County",
-                                                            "State"="State"),)
+                                                          "State"="State"),)
                                        ),
                                        br(),
                                        menuItem(
@@ -166,7 +166,7 @@ ui <- tagList(
                                       fluidRow(
                                           box(plotlyOutput("IHME_State_Hosp",height = 400)),
                                           box(plotlyOutput("SEIARProjection"),height = 400)),
-                                          box(plotlyOutput("OverlayPlots"), width =  900)
+                                      box(plotlyOutput("OverlayPlots"), width =  900)
                                   ),
                                   ####### END PROJECTION TAB #######
                                   
@@ -175,10 +175,10 @@ ui <- tagList(
                                   tabPanel(
                                       title = "Mission Risk",
                                       "Hello World")
-                                      
+                                  
                                   ####### END Mission Risk #######
                                   
-                      
+                                  
                       )
                   )
     ),
