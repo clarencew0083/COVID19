@@ -77,16 +77,16 @@ colnames(CovidConfirmedCases)[1]<-"CountyFIPS"
 
 
 #Read in IHME data for projecting data in the future
-temp <- tempfile()
-download.file("https://ihmecovid19storage.blob.core.windows.net/latest/ihme-covid19.zip", temp, mode="wb")
-zipdf <- unzip(temp, list = TRUE)
-csv_file <- zipdf$Name[2]
-IHME_Model <- read.csv(csv_file)
-unlink(temp)
-IHME_Model$date <- as.Date(IHME_Model$date, format = "%Y-%m-%d")
-StateList <- data.frame(state.name, state.abb)
-IHME_Model <- merge(IHME_Model, StateList, by.x = "location", by.y = names(StateList)[1])
-names(IHME_Model)[names(IHME_Model)=="state.abb"] <- "State"
+# temp <- tempfile()
+# download.file("https://ihmecovid19storage.blob.core.windows.net/latest/ihme-covid19.zip", temp, mode="wb")
+# zipdf <- unzip(temp, list = TRUE)
+# csv_file <- zipdf$Name[2]
+# IHME_Model <- read.csv(csv_file)
+# unlink(temp)
+# IHME_Model$date <- as.Date(IHME_Model$date, format = "%Y-%m-%d")
+# StateList <- data.frame(state.name, state.abb)
+# IHME_Model <- merge(IHME_Model, StateList, by.x = "location", by.y = names(StateList)[1])
+# names(IHME_Model)[names(IHME_Model)=="state.abb"] <- "State"
 
 
 #Create list of hospitals, bases, and counties.
@@ -210,7 +210,7 @@ HospitalIncreases<-function(ChosenBase, Radius, IncludedCounties, IncludedHospit
     TotalHospital<-sum(CovidCounties[,ncol(CovidCounties)])
     NotHospital<-sum(rev(CovidCounties)[,7])
     StillHospital<-ceiling((TotalHospital-NotHospital))
-    Upper<- round(((StillHospital+changeC*.1)/TotalBeds+.6)*100,1)
+    Upper<- round(((StillHospital+changeC*.1)/TotalBeds+.5)*100,1)
     #Lower<- round(((StillHospital+changeC*.207)/TotalBeds+.55)*100,1)
     paste(Upper," %", sep = "") 
 }
