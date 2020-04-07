@@ -1651,7 +1651,7 @@ CHIMELocalPlot<-function(SocialDistance, ForecastedDays, IncludedCounties){
 
 # Identify Info Pages
 # Inputs
-InfoLink <- includeMarkdown("https://raw.githubusercontent.com/treypujats/COVID19/master/covid19/InputsInfo.Rmd")
-CalcLink <- includeMarkdown("https://raw.githubusercontent.com/treypujats/COVID19/master/covid19/CalcInfo.Rmd")
-SourceLink <- includeMarkdown("https://raw.githubusercontent.com/treypujats/COVID19/master/covid19/SourceInfo.Rmd")
-OverviewLink <- includeMarkdown("https://raw.githubusercontent.com/treypujats/COVID19/master/covid19/OverviewInfo.Rmd")
+InfoLink <- includeMarkdown("https://raw.githubusercontent.com/treypujats/COVID19/master/covid19/InputsInfo.md")
+CalcLink <- includeMarkdown("https://raw.githubusercontent.com/treypujats/COVID19/master/covid19/CalcInfo.md")
+SourceLink <- includeMarkdown("https://raw.githubusercontent.com/treypujats/COVID19/master/covid19/SourceInfo.md")
+OverviewLink <- includeMarkdown("https://raw.githubusercontent.com/treypujats/COVID19/master/covid19/OverviewInfo.md")
