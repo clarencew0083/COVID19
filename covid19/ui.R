@@ -24,7 +24,7 @@ ui <- tagList(
                   
                   # Step One - Header
                   ###################################################################################################################################################
-                  dashboardHeader(title = "COVID-19 Risk Dashboard",
+                  dashboardHeader(title = div(img(src="AFIT_Emblem_Blue.png",height = '50',width = '110')),
                                   titleWidth = 300,
                                   dropdownMenu(
                                       headerText = "Want to know more?",
@@ -126,12 +126,12 @@ ui <- tagList(
                     font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
                     padding: 0 15px;
                     overflow: hidden;
-                    color: white;
+                    color: black;
                     }
                     '))),
                       tags$script(HTML('
                                    $(document).ready(function() {
-                                   $("header").find("nav").append(\'<span class="myClass"> WASH YOUR HANDS </span>\');
+                                   $("header").find("nav").append(\'<span class="myClass"> COVID-19 Health Assessment Dashboard </span>\');
                                    })
                                    ')),
                       
