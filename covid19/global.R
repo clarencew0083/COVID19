@@ -280,7 +280,8 @@ CalculateCHIMEPeak<-function(IncludedCounties, ChosenBase, ChosenRadius, SocialD
     DailyData<- dplyr::filter(DailyData, ForecastDate >= Sys.Date())
     
     Peak<-which.max(DailyData$`Expected Daily Cases`)
-    Peak<-DailyData[Peak,1]
+    Peak<-DailyData[Peak,2]
+    round(Peak)
     
 }
 
@@ -314,8 +315,8 @@ CalculateIHMEPeak<-function(ChosenBase, IncludedHospitals, radius){
     IHME_Data<-data.frame(IHME_Region$date,IHME_Region$allbed_mean)
     
     PeakDate<-which.max(IHME_Data$IHME_Region.allbed_mean)
-    PeakDate<-IHME_Data$IHME_Region.date[PeakDate]
-    PeakDate
+    Peak<-IHME_Data[PeakDate,2]
+    round(Peak)
 }
 
 

@@ -180,8 +180,8 @@ ui <- tagList(
                                       title = "Local Health Projections",
                                       fluidRow(
                                           valueBoxOutput("TotalPopulation"),
-                                          valueBoxOutput("CHIMEPeakDate"),
-                                          valueBoxOutput("IHMEPeakDate")
+                                          valueBoxOutput("IHMEPeakDate"),
+                                          valueBoxOutput("CHIMEPeakDate")
                                       ),
                                       fluidRow(
                                           box(plotlyOutput("IHME_State_Hosp",height = 400)),

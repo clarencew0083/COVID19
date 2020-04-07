@@ -169,8 +169,8 @@ server <- function(input, output) {
     output$CHIMEPeakDate<-renderValueBox({
         MyCounties<-GetCounties()
         Peak<-CalculateCHIMEPeak(MyCounties, input$Base, input$Radius, input$social_dist, input$proj_days)
-        Peak<-format(Peak,"%B %d")
-        valueBox(subtitle = "CHIME Predicted Peak Hospitalization Date",
+        Peak<-format(Peak)
+        valueBox(subtitle = "CHIME Predicted Peak Hospitalizations",
                  paste(Peak),
                  icon = icon("hospital"),
                  color = "blue")
@@ -179,8 +179,8 @@ server <- function(input, output) {
     output$IHMEPeakDate<-renderValueBox({
         MyHospitals<-GetHospitals()
         Peak<-CalculateIHMEPeak(input$Base, MyHospitals, input$Radius)
-        Peak<-format(Peak,"%B %d")
-        valueBox(subtitle = "IHME Predicted Peak Hospitalization Date",
+        Peak<-format(Peak)
+        valueBox(subtitle = "IHME Predicted Peak Hospitalizations",
                  paste(Peak),
                  icon = icon("hospital"),
                  color = "navy")
