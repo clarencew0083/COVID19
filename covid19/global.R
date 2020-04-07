@@ -38,7 +38,6 @@ library(usmap)
 library(data.table)
 library(plyr)
 library(DT)
-library(plotly)
 library(mapproj)
 library(viridis)
 #library(tidyverse)
@@ -46,6 +45,7 @@ library(zoo) #used for rollsum function
 library(rmarkdown)
 library(rvest)
 library(maps)
+library(plotly)
 
 
 
@@ -443,7 +443,7 @@ CovidCasesPerDayChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHo
         VectDailyCovid[1:(length(VectDailyCovid)-1)]
     
     #Estimation for new hospitalizations
-    DailyNewHospitalizations<-ceiling(DailyNewCases*.1)
+    DailyNewHospitalizations<-ceiling(DailyNewCases*.21)
     
     #Find New Deaths
     CovidCountiesDeath<-subset(CovidDeaths, CountyFIPS %in% IncludedCounties$FIPS)
@@ -493,7 +493,7 @@ CovidCasesCumChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHospi
     CumDailyDeaths<-colSums(CovidCountiesDeath[29:ncol(CovidCountiesDeath)])
     
     #Estimation for total hospitalizations
-    CumHospitalizations<-ceiling(CumDailyCovid*0.1)
+    CumHospitalizations<-ceiling(CumDailyCovid*0.21)
     
     #Clean up the dataset to get ready to plot it
     ForecastDate<- seq(as.Date("2020-02-17"), length=(length(CumDailyDeaths)), by="1 day")
