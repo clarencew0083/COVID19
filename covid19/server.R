@@ -253,6 +253,13 @@ server <- function(input, output) {
 
         #Get regional and state populations
         MyCounties <- GetCounties()
+        CovidCounties<-subset(CovidConfirmedCases, CountyFIPS %in% MyCounties$FIPS)
+        HistoricalData<-colSums(CovidCounties[,5:length(CovidCounties)])
+        HistoricalDates<-seq(as.Date("2020-01-22"), length=length(HistoricalData), by="1 day")
+        HistoricalData<-data.frame(HistoricalDates, HistoricalData*.21, HistoricalData*.15, HistoricalData*.27)
+        colnames(HistoricalData)<-c("ForecastDate", "Expected Hospitalizations", "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
+        
+        
         StPopList <- dplyr::filter(CountyInfo, State == toString(BaseState$State[1]))
         RegPop <- sum(MyCounties$Population)
         StPop <- sum(StPopList$Population)
@@ -272,17 +279,21 @@ server <- function(input, output) {
         IHME_Region$allbed_mean = round(IHME_State$allbed_mean*PopRatio)
         IHME_Region$allbed_lower = round(IHME_State$allbed_lower*PopRatio)
         IHME_Region$allbed_upper = round(IHME_State$allbed_upper*PopRatio)
+        IHME_Region<-data.frame(IHME_Region$date, IHME_Region$allbed_mean, IHME_Region$allbed_lower, IHME_Region$allbed_upper)
+        colnames(IHME_Region)<-c("ForecastDate", "Expected Hospitalizations", "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
+        IHME_Region<- dplyr::filter(IHME_Region, ForecastDate >= Sys.Date())
+        
+        IHME_Region<-rbind(HistoricalData,IHME_Region)
+        IHME_Region$ForecastDate<-as.Date(IHME_Region$ForecastDate)
 
-
-
-        r1 <- ggplot(data=IHME_Region, aes(x=date, y=allbed_mean, ymin=allbed_lower, ymax=allbed_upper)) +
+        r1 <- ggplot(data=IHME_Region, aes(x=ForecastDate, y=`Expected Hospitalizations`, ymin=`Lower Bound Hospitalizations`, ymax=`Upper Bound Hospitalizations`)) +
             geom_line(linetype = "dashed", size = 0.75) +
             geom_ribbon(alpha=0.3, fill = "cadetblue2") +
             # geom_hline(yintercept = TotalBedsCounty * 0.5,
             #            linetype = "solid",
             #            color = "red") +
-            labs(title = paste("IHME Hospitalization Projections for Selected Region"),
-                 x = "Date", y = "Projected Daily Hospitalizations") +
+            labs(title = paste("IHME Projected Daily Hospitalizations"),
+                 x = "Date", y = "Daily Hospitalizations") +
             theme_bw() +
             theme(plot.title = element_text(face = "bold", size = 15, family = "sans"),
                   axis.title = element_text(face = "bold", size = 11, family = "sans"),
