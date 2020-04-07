@@ -176,6 +176,16 @@ server <- function(input, output) {
                  color = "blue")
     })
     
+    # output$CHIMEMinMax<-renderValueBox({
+    #     MyCounties<-GetCounties()
+    #     Peak<-CalculateCHIMEMinMax(MyCounties, input$Base, input$Radius, input$social_dist, input$proj_days)
+    #     Peak<-format(Peak)
+    #     valueBox(subtitle = "CHIME Predicted Peak Hospitalizations",
+    #              paste(Peak),
+    #              icon = icon("hospital"),
+    #              color = "blue")
+    # })
+    
     output$IHMEPeakDate<-renderValueBox({
         MyHospitals<-GetHospitals()
         Peak<-CalculateIHMEPeak(input$Base, MyHospitals, input$Radius)
@@ -186,6 +196,15 @@ server <- function(input, output) {
                  color = "navy")
     })
     
+    
+    # output$IHMEMinMax<-renderValueBox({
+    #     MyHospitals<-GetHospitals()
+    #     Peak<-CalculateIHMEMinMax(input$Base, MyHospitals, input$Radius)
+    #     valueBox(subtitle = "IHME Predicted Min/Max Hospitalizations",
+    #              paste(Peak),
+    #              icon = icon("hospital"),
+    #              color = "navy")
+    # })
     # Output line plots for the dashboard ----------------------------------------------------------------------------------------------------------------------------------------------------
     
     

@@ -181,12 +181,16 @@ ui <- tagList(
                                       fluidRow(
                                           valueBoxOutput("TotalPopulation"),
                                           valueBoxOutput("IHMEPeakDate"),
-                                          valueBoxOutput("CHIMEPeakDate")
+                                          valueBoxOutput("CHIMEPeakDate"),
+                                          # valueBoxOutput("TotalPopulation"),
+                                          # valueBoxOutput("IHMEMinMax"),
+                                          # valueBoxOutput("CHIMEMinMax")
+                                          
                                       ),
                                       fluidRow(
                                           box(plotlyOutput("IHME_State_Hosp",height = 400)),
                                           box(plotlyOutput("SEIARProjection"),height = 400)),
-                                      box(plotlyOutput("OverlayPlots"), width =  900)
+                                          box(plotlyOutput("OverlayPlots"), width =  900)
                                   ),
                                   ####### END PROJECTION TAB #######
                                   
