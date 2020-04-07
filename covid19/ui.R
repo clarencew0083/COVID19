@@ -100,16 +100,16 @@ ui <- tagList(
                                        ),
                                        br(),
                                        #actionButton("refresh", "Refresh", width = "90%"),
-                                       hr(),
-                                       fluidRow(
-                                           valueBox("LOW RISK", subtitle ="Mission Risk **notional ex.**",color= "green",width = 12)
-                                       ),
-                                       fluidRow(
-                                           valueBox("MEDIUM RISK", subtitle ="Installation Health Risk **notional ex.**",color= "yellow", width = 12)
-                                       ),
-                                       fluidRow(
-                                           valueBox("HIGH RISK", subtitle ="Local Health Risk **notional ex.**",color= "red",width = 12)
-                                       )
+                                       hr()
+                                       # fluidRow(
+                                       #     valueBox("LOW RISK", subtitle ="Mission Risk **notional ex.**",color= "green",width = 12)
+                                       # ),
+                                       # fluidRow(
+                                       #     valueBox("MEDIUM RISK", subtitle ="Installation Health Risk **notional ex.**",color= "yellow", width = 12)
+                                       # ),
+                                       # fluidRow(
+                                       #     valueBox("HIGH RISK", subtitle ="Local Health Risk **notional ex.**",color= "red",width = 12)
+                                       # )
                                    )
                                    
                   ),
