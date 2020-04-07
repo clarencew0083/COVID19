@@ -49,6 +49,7 @@ library(maps)
 
 
 
+
 # Step Two
 ###################################################################################################################################################
 #Define Variables and load in data up front if necessary.
@@ -1164,7 +1165,7 @@ NationalOverlayPlot<-function(SocialDistance, DaysForecasted){
                                socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,
                                ventilatortime,daysforecasted,Ro, .5)
     
-    MyDates<-seq(Sys.Date()-(length(CovidConfirmedCases)-65), length=daysforecasted, by="1 day")
+    MyDates<-seq(Sys.Date()-(length(CovidConfirmedCases)-80), length=daysforecasted, by="1 day")
     DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
     TotalData<-data.frame(MyDates, SEIARProj$sir$hos_cum)
     colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases")

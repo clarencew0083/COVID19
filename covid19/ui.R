@@ -132,7 +132,7 @@ ui <- tagList(
                     '))),
                       tags$script(HTML('
                                    $(document).ready(function() {
-                                   $("header").find("nav").append(\'<span class="myClass"> COVID-19 Health Assessment Dashboard </span>\');
+                                   $("header").find("nav").append(\'<span class="myClass"> COVID-19 Health Assessment Dashboard v2.0</span>\');
                                    })
                                    ')),
                       
@@ -208,15 +208,15 @@ ui <- tagList(
                                           box(plotlyOutput("IHMENationaProj",height = 400)),
                                           box(plotlyOutput("CHIMENationalProj"),height = 400)),
                                       box(plotlyOutput("NationalPlotOverlay"), width =  900)
-                                  ),
+                                  )
                                   ####### END PROJECTION TAB #######
                                   
                                   ####### BEGIN MISSION RISK TAB #########
                                   # Mission Risk ------------------------------------------------------------
-                                  tabPanel(
-                                      title = "Mission Risk",
-                                      "Hello World")
-                                  
+                                  # tabPanel(
+                                  #     title = "Mission Risk",
+                                  #     "Hello World")
+                                  # 
                                   ####### END Mission Risk #######
                                   
                                   
