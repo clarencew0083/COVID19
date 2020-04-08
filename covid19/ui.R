@@ -100,6 +100,7 @@ ui <- tagList(
                                        ),
                                        br(),
                                        #actionButton("refresh", "Refresh", width = "90%"),
+<<<<<<< HEAD
                                        div(style="text-align:center", hr(), "Generate Report"),
                                        br(),
                                        fluidRow(
@@ -107,6 +108,10 @@ ui <- tagList(
                                            tags$head(tags$style(".butt{background-color:#add8e6;} .butt{color: white;}")),
                                            align = "center"
                                        )
+=======
+                                       hr()
+                                       # downloadButton("report", "Generate report")
+>>>>>>> a50ba34189e469af8fa5344fb895ed20bf76e82c
                                        # fluidRow(
                                        #     valueBox("LOW RISK", subtitle ="Mission Risk **notional ex.**",color= "green",width = 12)
                                        # ),
