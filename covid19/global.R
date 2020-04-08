@@ -174,13 +174,40 @@ NationalDataTable$`Cases Per 100,000 People`<-round(NationalDataTable$`Total Cas
 
 
 
+GetCounties<-function(base,radius){
+    #BaseStats<-dplyr::filter(AFBaseLocations, Base == input$Base)
+    
+    CountyInfo$DistanceMiles = cimd[,as.character(base)]
+    #for (i in 1:3143) {
+    #    CountyInfo$DistanceMiles[i]<-(distm(c(BaseStats$Long, BaseStats$Lat), c(CountyInfo$Longitude[i], CountyInfo$Latitude[i]), fun = distHaversine)/1609.34)
+    #}
+    IncludedCounties<-dplyr::filter(CountyInfo, DistanceMiles <= radius)
+    IncludedCounties
+}
+
+GetHospitals<-function(base,radius){
+    #Finds number of hospitals in radius
+    #BaseStats<-dplyr::filter(AFBaseLocations, Base == input$Base)
+    
+    HospitalInfo$DistanceMiles = himd[,as.character(base)]
+    
+    IncludedHospitals<-dplyr::filter(HospitalInfo, (DistanceMiles <= radius))
+    IncludedHospitals<-dplyr::filter(IncludedHospitals, (TYPE=="GENERAL ACUTE CARE") | (TYPE=="CRITICAL ACCESS"))
+    IncludedHospitals
+}
+
+
+
+
+
+
 #Step Three
 ###################################################################################################################################################
 
 # Establish Local Counties ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #These Functions establishes which counties are going to be included in the analysis determined by the base and radius.
-CalculateCounties<-function(ChosenBase, Radius, IncludedCounties){
+CalculateCounties<-function(IncludedCounties){
     #Finds which counties in given radius. Also Give county statistics
     TotalPopulation <-  sum(IncludedCounties$Population)
     TotalPopulation
@@ -190,19 +217,19 @@ CalculateCounties<-function(ChosenBase, Radius, IncludedCounties){
 # Create Numerical Statistics for the dashboard -------------------------------------------------------------------------------------------------------------------------------------
 
 # Finds Covid Cases and statistics on covid per county
-CalculateCovid<-function(ChosenBase, Radius, IncludedCounties){
+CalculateCovid<-function(IncludedCounties){
     #Finds which counties in given radius. Also Give county statistics
     CovidCounties<-subset(CovidConfirmedCases, CountyFIPS %in% IncludedCounties$FIPS)
     sum(rev(CovidCounties)[,1])
 }
 
-CalculateDeaths<-function(ChosenBase, Radius, IncludedCounties){
+CalculateDeaths<-function(IncludedCounties){
     #Finds which counties in given radius. Also Give county statistics
     CovidCountiesDeath<-subset(CovidDeaths, CountyFIPS %in% IncludedCounties$FIPS)
     sum(CovidCountiesDeath[,ncol(CovidCountiesDeath)])
 }
 
-HospitalIncreases<-function(ChosenBase, Radius, IncludedCounties, IncludedHospitals){
+HospitalIncreases<-function(IncludedCounties, IncludedHospitals){
     #Finds number of hospitals in radius
     TotalBeds<-sum(IncludedHospitals$BEDS)
     #Finds which counties in given radius. Also Give county statistics
@@ -476,7 +503,14 @@ CovidCasesPerDayChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHo
         scale_x_date(date_breaks = "1 week") +
         labs(color='')
     
-    ggplotly(p1)
+    p1 <- ggplotly(p1)
+    
+    p1 <- p1 %>% layout(legend = list(orientation = "h",   # show entries horizontally
+                                      xanchor = "center",  # use center of legend as anchor
+                                      x = 0.5,
+                                      y = 1.2)) %>% config(displayModeBar = FALSE)
+  
+    p1
 }
 
 
@@ -512,15 +546,22 @@ CovidCasesCumChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHospi
               axis.title = element_text(face = "bold", size = 11, family = "sans"),
               axis.text.x = element_text(angle = 60, hjust = 1), 
               axis.line = element_line(color = "black"),
-              legend.position = "top",
               plot.background = element_blank(),
               panel.grid.major = element_blank(),
               panel.grid.minor = element_blank(),
-              panel.border = element_blank()) +
+              panel.border = element_blank(),
+              legend.position = c(0, 1),) +
         scale_x_date(date_breaks = "1 week")
-    labs(color='')
+
+    p2 <- ggplotly(p2)
+    p2 <- p2 %>% layout(legend = list(orientation = "h",   # show entries horizontally
+                                      xanchor = "center",  # use center of legend as anchor
+                                      x = 0.5,
+                                      y = 1.2)) %>% config(displayModeBar = FALSE)
+    p2 <- p2 %>% layout(xaxis = list(showgrid = F),
+                       yaxis = list(gridcolor = "lightgray"))
     
-    ggplotly(p2)
+    p2
 }
 
 
