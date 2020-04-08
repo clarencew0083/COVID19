@@ -1,30 +1,122 @@
 ---
-title: "TestReport"
-author: "AFITeers"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+title: <center> CHAD Output Summary </center>
+  <center> `r format(Sys.time(), '%d %B, %Y')` </center>
+author: 
+date:
 output: html_document
+params:
+    radius: NA
+    base: NA
+    pjDays: NA
+    socDis: NA
+    
 ---
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+---
+```{r echo = FALSE, warning = FALSE, message = FALSE}
+# Some global stuff
+library(ggplot2)
+library(plotly)
+library(knitr)
+library(kableExtra)
 
-## R Markdown
+Counties = GetCounties(params$base, params$radius)
+Hospitals = GetHospitals(params$base, params$radius)
+CountyDT = GetLocalDataTable(Counties)
+CovidCounties = subset(CovidConfirmedCases, CountyFIPS %in% Counties$FIPS)
+CountyCovid = CalculateCovid(Counties)
+CountyDeaths = CalculateDeaths(Counties)
+TotPop = CalculateCounties(Counties)
+CovidCaseChng = sum(rev(CovidCounties)[,1] - rev(CovidCounties)[,2])
+CovidDeathChng <- sum(rev(CovidCounties)[,1] - rev(CovidCounties)[,2])
+HospUltz = HospitalIncreases(Counties, Hospitals)
+```
+---
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+<center>
+#  Base: `r params$base` 
+</center>
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+The Air Force COVID-19 Health Assessment Dashboard (CHAD) was developed to provide a centralized location for leadership to receive up-to-date pandemic information specifically tailored to their installation and the surrounding local area. 
 
-```{r cars}
-summary(cars)
+This report was generated using a **`r params$radius` mile radius** around **`r params$base`** as the defined local area.
+
+## Current Local Area Info
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+<div class = "row">
+
+<div class = "col-md-4">
+
+- Local Population: `r TotPop`
+
+- Total Local Cases: `r comma(CalculateCovid(Counties))`
+
+- New Local Cases: `r paste("+",toString(CovidCaseChng))`
+
+- Total Local Fatalities: `r comma(CalculateDeaths(Counties))`
+
+- New Local Fatalities: `r paste("+",toString(CovidDeathChng))`
+
+- Local Hospital Bed Utilization: `r HospUltz`
+
+- Local Hospital Bed Utilization Change: 
+
+</div>
+
+<div class = "col-md-8">
+
+```{r echo=FALSE}
+CountyChoro = PlotLocalChoro(Counties, base, "County")
+CountyChoro
 ```
 
-## Including Plots
+</div>
+</div>
 
-You can also embed plots, for example:
+## Local Area Plots
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+<br>
+
+### Daily Stats
+
+The charts below display the 
+
+<div class = "row">
+
+<div class = "col-md-6">
+```{r fig.height = 4, fig.width = 4, echo=FALSE}
+CCDaily = CovidCasesPerDayChart(base, radius, Counties, Hospitals)
+CCDaily = CCDaily %>% layout(xaxis = list(showgrid = F),
+                   yaxis = list(gridcolor = "lightgray"))
+CCDaily
+```
+</div>
+
+<div class = "col-md-6">
+```{r fig.height = 4, fig.width = 4, echo=FALSE}
+CCtot = CovidCasesCumChart(base, radius, Counties, Hospitals)
+CCtot = CCtot %>% layout(xaxis = list(showgrid = F),
+                 yaxis = list(gridcolor = "lightgray"))
+CCtot
+```
+</div>
+
+</div>
+
+
+```{r echo=FALSE}
+kable(CountyDT) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+Base is `r params$base` and the radius is `r params$radius`
+
+
