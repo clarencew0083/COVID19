@@ -64,19 +64,22 @@ customize dashboard assessments and projections.*
 <th style="text-align: left;">Acronyms</th>
 <th></th>
 <th style="text-align: left;">Definitions</th>
-</tr>
+<td class="divider"><hr /></td>
+  
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Closing Schools (SC)</td>
 <td></td>
 <td style="text-align: left;">All K-12 schools will be closed for ten business days</td>
-</tr>
+<td class="divider"><hr /></td>
+  
 <tr class="even">
 <td style="text-align: left;">Closing Non-Essential Businesses (NE)</td>
 <td></td>
 <td style="text-align: left;">All non-essential businesses are ordered closed. Supermarkets, pharmacies, and gas stations will remain open. Businesses that offer carry-out, delivery, and drive-through food and beverage service may continue.</td>
-</tr>
+<td class="divider"><hr /></td>
+  
 <tr class="odd">
 <td style="text-align: left;">Social Distancing (SD)</td>
 <td></td>
