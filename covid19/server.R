@@ -258,7 +258,7 @@ server <- function(input, output) {
         BaseState<-dplyr::filter(AFBaseLocations, Base == input$Base)
 
         IncludedCounties<-GetCounties(input$Base,input$Radius)
-        CHIMELocalPlot(input$social_dist, input$proj_days, IncludedCounties)
+        CHIMELocalPlot(input$social_dist, input$proj_days, IncludedCounties, input$StatisticType)
 
     })
     
@@ -281,7 +281,7 @@ server <- function(input, output) {
 
         MyCounties<-GetCounties(input$Base,input$Radius)
         MyHospitals<-GetHospitals(input$Base,input$Radius)
-        PlotOverlay(input$Base, MyCounties, MyHospitals, input$social_dist, input$proj_days)
+        PlotOverlay(input$Base, MyCounties, MyHospitals, input$social_dist, input$proj_days, input$StatisticType)
 
     })
     
