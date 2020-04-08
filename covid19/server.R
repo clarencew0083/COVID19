@@ -21,27 +21,7 @@ server <- function(input, output) {
     ###################################################################################################################################################
     
     
-    GetCounties<-reactive({
-        #BaseStats<-dplyr::filter(AFBaseLocations, Base == input$Base)
-        
-        CountyInfo$DistanceMiles = cimd[,as.character(input$Base)]
-        #for (i in 1:3143) {
-        #    CountyInfo$DistanceMiles[i]<-(distm(c(BaseStats$Long, BaseStats$Lat), c(CountyInfo$Longitude[i], CountyInfo$Latitude[i]), fun = distHaversine)/1609.34)
-        #}
-        IncludedCounties<-dplyr::filter(CountyInfo, DistanceMiles <= input$Radius)
-        IncludedCounties
-    })
     
-    GetHospitals<-reactive({
-        #Finds number of hospitals in radius
-        #BaseStats<-dplyr::filter(AFBaseLocations, Base == input$Base)
-        
-        HospitalInfo$DistanceMiles = himd[,as.character(input$Base)]
-        
-        IncludedHospitals<-dplyr::filter(HospitalInfo, (DistanceMiles <= input$Radius))
-        IncludedHospitals<-dplyr::filter(IncludedHospitals, (TYPE=="GENERAL ACUTE CARE") | (TYPE=="CRITICAL ACCESS"))
-        IncludedHospitals
-    })
     
     # Step Two
     ###################################################################################################################################################
@@ -51,9 +31,9 @@ server <- function(input, output) {
     
     #Finds which counties in given radius. Also Give county statistics
     output$TotalPopulation <- renderValueBox({
-        MyCounties<-GetCounties()
+        MyCounties<-GetCounties(input$Base,input$Radius)
         valueBox(subtitle = "Total Regional Population",
-                 comma(CalculateCounties(input$Base,input$Radius, MyCounties)),
+                 comma(CalculateCounties(MyCounties)),
                  icon = icon("list-ol"),
                  color = "light-blue"
         )
@@ -62,9 +42,9 @@ server <- function(input, output) {
     
     # Finds Covid Cases and statistics on covid per county
     output$CovidCases <- renderValueBox({
-        MyCounties<-GetCounties()
+        MyCounties<-GetCounties(input$Base,input$Radius)
         valueBox(subtitle = "Local Cases",
-                 comma(CalculateCovid(input$Base,input$Radius,MyCounties)),
+                 comma(CalculateCovid(MyCounties)),
                  icon = icon("list-ol"),
                  color = "light-blue"
         )
@@ -73,7 +53,7 @@ server <- function(input, output) {
     
     #Outputs change in covid cases per day
     output$CaseChangeLocal <- renderValueBox({
-        MyCounties<-GetCounties()
+        MyCounties<-GetCounties(input$Base,input$Radius)
         CovidCounties<-subset(CovidConfirmedCases, CountyFIPS %in% MyCounties$FIPS)
         changeC <- sum(rev(CovidCounties)[,1] - rev(CovidCounties)[,2])
         
@@ -85,9 +65,9 @@ server <- function(input, output) {
     
     # Finds Covid deaths and statistics on covid per county
     output$LocalCovidDeaths <- renderValueBox({
-        MyCounties<-GetCounties()
+        MyCounties<-GetCounties(input$Base,input$Radius)
         valueBox(subtitle = "Local Fatalities",
-                 comma(CalculateDeaths(input$Base, input$Radius, MyCounties)),
+                 comma(CalculateDeaths(MyCounties)),
                  icon = icon("skull"),
                  color = "blue"
         )
@@ -95,7 +75,7 @@ server <- function(input, output) {
     
     #Outputs change in deaths per day   
     output$DeathChangeLocal <- renderValueBox({
-        MyCounties<-GetCounties()
+        MyCounties<-GetCounties(input$Base,input$Radius)
         CovidCounties<-subset(CovidDeaths, CountyFIPS %in% MyCounties$FIPS)
         changeC <- sum(rev(CovidCounties)[,1] - rev(CovidCounties)[,2])
         
@@ -106,10 +86,10 @@ server <- function(input, output) {
     
     #Finds hospital information within a given 100 mile radius. Calculates number of total hospital beds. Can compare to number of cases
     output$HospitalUtilization <- renderValueBox({
-        MyCounties<-GetCounties()
-        MyHospitals<-GetHospitals()
+        MyCounties<-GetCounties(input$Base,input$Radius)
+        MyHospitals<-GetHospitals(input$Base,input$Radius)
         valueBox(subtitle = "Local Hospital Utilization *Partially Notional*",
-                 HospitalIncreases(input$Base,input$Radius, MyCounties, MyHospitals),
+                 HospitalIncreases(MyCounties, MyHospitals),
                  icon = icon("hospital"),
                  color = "navy")
     })
@@ -117,8 +97,8 @@ server <- function(input, output) {
     
     
     output$HospUtlzChange <- renderValueBox({
-        MyCounties<-GetCounties()
-        MyHospitals<-GetHospitals()
+        MyCounties<-GetCounties(input$Base,input$Radius)
+        MyHospitals<-GetHospitals(input$Base,input$Radius)
         
         #Finds number of hospitals in radius
         TotalBeds<-sum(MyHospitals$BEDS)
@@ -167,7 +147,7 @@ server <- function(input, output) {
     })
     
     output$CHIMEPeakDate<-renderValueBox({
-        MyCounties<-GetCounties()
+        MyCounties<-GetCounties(input$Base,input$Radius)
         Peak<-CalculateCHIMEPeak(MyCounties, input$Base, input$Radius, input$social_dist, input$proj_days)
         Peak<-format(Peak)
         valueBox(subtitle = "CHIME Predicted Peak Hospitalizations",
@@ -187,7 +167,7 @@ server <- function(input, output) {
     # })
     
     output$IHMEPeakDate<-renderValueBox({
-        MyHospitals<-GetHospitals()
+        MyHospitals<-GetHospitals(input$Base,input$Radius)
         Peak<-CalculateIHMEPeak(input$Base, MyHospitals, input$Radius)
         Peak<-format(Peak)
         valueBox(subtitle = "IHME Predicted Peak Hospitalizations",
@@ -210,15 +190,15 @@ server <- function(input, output) {
     
     #Create first plot of local health population 
     output$LocalHealthPlot1<-renderPlotly({
-        MyCounties<-GetCounties()
-        MyHospitals<-GetHospitals()
+        MyCounties<-GetCounties(input$Base,input$Radius)
+        MyHospitals<-GetHospitals(input$Base,input$Radius)
         CovidCasesPerDayChart(input$Base, input$Radius, MyCounties,MyHospitals)
     })
     
     #Create second plot of local health population 
     output$LocalHealthPlot2<-renderPlotly({
-        MyCounties<-GetCounties()
-        MyHospitals<-GetHospitals()
+        MyCounties<-GetCounties(input$Base,input$Radius)
+        MyHospitals<-GetHospitals(input$Base,input$Radius)
         CovidCasesCumChart(input$Base, input$Radius, MyCounties, MyHospitals)
     })
     
@@ -251,7 +231,7 @@ server <- function(input, output) {
     
     #Creates the local choropleth charts that change based on which base and radius.
     output$LocalChoroPlot<-renderPlotly({
-        MyCounties<-GetCounties()
+        MyCounties<-GetCounties(input$Base,input$Radius)
         PlotLocalChoro(MyCounties, input$Base, input$TypeLocal)
     })
     
@@ -266,12 +246,12 @@ server <- function(input, output) {
         
         #Creating the stats and dataframes determined by the base we choose to look at.
         BaseState<-dplyr::filter(AFBaseLocations, Base == input$Base)
-        IncludedHospitals<-GetHospitals()
+        IncludedHospitals<-GetHospitals(input$Base,input$Radius)
         IHME_State <- dplyr::filter(IHME_Model, State == toString(BaseState$State[1]))
         TotalBedsCounty <- sum(IncludedHospitals$BEDS)
 
         #Get regional and state populations
-        MyCounties <- GetCounties()
+        MyCounties <- GetCounties(input$Base,input$Radius)
         CovidCounties<-subset(CovidConfirmedCases, CountyFIPS %in% MyCounties$FIPS)
         HistoricalData<-colSums(CovidCounties[,5:length(CovidCounties)])
         HistoricalDates<-seq(as.Date("2020-01-22"), length=length(HistoricalData), by="1 day")
@@ -332,7 +312,7 @@ server <- function(input, output) {
     #Output the SEIAR CHIME projections with a max, min, and expected value
     output$SEIARProjection<-renderPlotly({
         BaseState<-dplyr::filter(AFBaseLocations, Base == input$Base)
-        IncludedCounties<-GetCounties()
+        IncludedCounties<-GetCounties(input$Base,input$Radius)
         CHIMELocalPlot(input$social_dist, input$proj_days, IncludedCounties)
     })
     
@@ -352,8 +332,8 @@ server <- function(input, output) {
     
     #Overlay Projected Plots
     output$OverlayPlots<-renderPlotly({
-        MyCounties<-GetCounties()
-        MyHospitals<-GetHospitals()
+        MyCounties<-GetCounties(input$Base,input$Radius)
+        MyHospitals<-GetHospitals(input$Base,input$Radius)
         PlotOverlay(input$Base, MyCounties, MyHospitals, input$social_dist, input$proj_days)
     })
     
@@ -368,7 +348,7 @@ server <- function(input, output) {
     })
     
     output$CountyDataTable1<-DT::renderDataTable({
-        MyCounties<-GetCounties()
+        MyCounties<-GetCounties(input$Base,input$Radius)
         dt<-GetLocalDataTable(MyCounties)
         dt<-DT::datatable(dt, rownames = FALSE, options = list(dom = 't',ordering = F, "pageLength"=100))
         dt
@@ -419,31 +399,32 @@ server <- function(input, output) {
         )
     })
 
-    # output$report <- downloadHandler(
-    #     # For PDF output, change this to "report.pdf"
-    #     filename = "report.html",
-    #     content = function(file) {
-    #         # Copy the report file to a temporary directory before processing it, in
-    #         # case we don't have write permissions to the current working dir (which
-    #         # can happen when deployed).
-    #         tempReport <- file.path(tempdir(), "TestReport.Rmd")
-    #         file.copy("TestReport.Rmd", tempReport, overwrite = TRUE)
-    #         
-    #         # Set up parameters to pass to Rmd document
-    #         params <- list(radius = input$Radius,
-    #                        base = input$Base,
-    #                        pjDays = input$proj_days,
-    #                        socDis = input$social_dist)
-    #         
-    #         # Knit the document, passing in the `params` list, and eval it in a
-    #         # child of the global environment (this isolates the code in the document
-    #         # from the code in this app).
-    #         rmarkdown::render(tempReport, output_file = file,
-    #                           params = params,
-    #                           envir = new.env(parent = globalenv())
-    #         )
-    #     }
-    # )
+    output$report <- downloadHandler(
+        # For PDF output, change this to "report.pdf"
+        filename = "report.html",
+        content = function(file) {
+            # Copy the report file to a temporary directory before processing it, in
+            # case we don't have write permissions to the current working dir (which
+            # can happen when deployed).
+            tempReport <- file.path(tempdir(), "TestReport.Rmd")
+            file.copy("TestReport.Rmd", tempReport, overwrite = TRUE)
+
+            # Set up parameters to pass to Rmd document
+            params <- list(radius = input$Radius,
+                           base = input$Base,
+                           pjDays = input$proj_days,
+                           socDis = input$social_dist)
+
+            # Knit the document, passing in the `params` list, and eval it in a
+            # child of the global environment (this isolates the code in the document
+            # from the code in this app).
+            rmarkdown::render(tempReport, output_file = file,
+                              params = params,
+                              envir = new.env(parent = globalenv())
+                              )
+            
+        }
+    )
     
     
     
