@@ -42,7 +42,7 @@ ui <- tagList(
                   
                   # Step Two - Sidebar
                   ###################################################################################################################################################
-                  dashboardSidebar(width = 300, 
+                  dashboardSidebar(width = 300,
                                    sidebarMenu(
                                        selectInput(
                                            "Base",
@@ -100,12 +100,17 @@ ui <- tagList(
                                        ),
                                        br(),
                                        #actionButton("refresh", "Refresh", width = "90%"),
-                                       hr(),
-                                       # downloadButton("report", "Generate report")
+                                       div(style="text-align:center", hr(), "Generate Report"),
+                                       br(),
+                                       fluidRow(
+                                           downloadButton("report", "Download", class = "butt"),
+                                           tags$head(tags$style(".butt{background-color:#add8e6;} .butt{color: white;}")),
+                                           align = "center"
+                                       )
                                        # fluidRow(
                                        #     valueBox("LOW RISK", subtitle ="Mission Risk **notional ex.**",color= "green",width = 12)
                                        # ),
-                                       # fluidRow(
+                                       # fluidRow(h()
                                        #     valueBox("MEDIUM RISK", subtitle ="Installation Health Risk **notional ex.**",color= "yellow", width = 12)
                                        # ),
                                        # fluidRow(
