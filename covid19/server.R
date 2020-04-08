@@ -331,6 +331,13 @@ server <- function(input, output) {
                 InfoLink)
         )
     })
+    observeEvent(input$projInfo, {
+        showModal(
+            modalDialog(
+                size = "l",fade = TRUE, easyClose = TRUE, title = "PROJECTIONS",
+                ProjLink)
+        )
+    })
     
     observeEvent(input$calcInfo, {
         showModal(

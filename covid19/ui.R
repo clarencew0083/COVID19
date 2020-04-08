@@ -33,6 +33,9 @@ ui <- tagList(
                                               class = "dropdown"),
                                       tags$li(actionLink("inputInfo", label = "User Inputs", icon = icon("sliders-h")),
                                               class = "dropdown"),
+                                      
+                                      tags$li(actionLink("projInfo", label = "Projections", icon = icon("sliders-h")),
+                                              class = "dropdown"),
                                       tags$li(actionLink("calcInfo", label = "Calculations", icon = icon("calculator")),
                                               class = "dropdown"),
                                       tags$li(actionLink("sourceInfo", label = "Sources", icon = icon("user-secret")),

@@ -2529,3 +2529,4 @@ InfoLink <- includeMarkdown("https://raw.githubusercontent.com/treypujats/COVID1
 CalcLink <- includeMarkdown("https://raw.githubusercontent.com/treypujats/COVID19/master/covid19/CalcInfo.md")
 SourceLink <- includeMarkdown("https://raw.githubusercontent.com/treypujats/COVID19/master/covid19/SourceInfo.md")
 OverviewLink <- includeMarkdown("https://raw.githubusercontent.com/treypujats/COVID19/master/covid19/OverviewInfo.md")
+ProjLink <- includeMarkdown("https://raw.githubusercontent.com/treypujats/COVID19/master/covid19/ProjInfo.md")
