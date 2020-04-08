@@ -11,43 +11,53 @@ offers a quick comparison of the two models.
 <th style="text-align: center;">Model</th>
 <th style="text-align: center;">IHME</th>
 <th style="text-align: center;">CHIME</th>
+
+<td class="divider"><hr /></td>
 </tr>
+
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: center;">Institution</td>
 <td style="text-align: center;">IHME of University of Washington</td>
 <td style="text-align: center;">University of Pennsylvania</td>
-</tr>
+<td class="divider"><hr /></td>
+
 <tr class="even">
 <td style="text-align: center;">Modeling Approach</td>
 <td style="text-align: center;">Data-driven, Statistical</td>
 <td style="text-align: center;">SIR-based, deterministic</td>
-</hr>
+<td class="divider"><hr /></td>
+
 <tr class="odd">
 <td style="text-align: center;">Strengths</td>
 <td style="text-align: center;">DoD Supported, ICU Capacity</td>
 <td style="text-align: center;">DoD Suported, ICU Capactiy</td>
-</tr>
+<td class="divider"><hr /></td>
+
 <tr class="even">
 <td style="text-align: center;">Limitations</td>
 <td style="text-align: center;">Relies on initial data</td>
 <td style="text-align: center;">Lacks seasonal factors, deterministic</td>
-</tr>
+<td class="divider"><hr /></td>
+
 <tr class="odd">
 <td style="text-align: center;">Location Concentration</td>
 <td style="text-align: center;">U.S. and individual states</td>
 <td style="text-align: center;">Specific regions with states</td>
-</tr>
+<td class="divider"><hr /></td>
+
 <tr class="even">
 <td style="text-align: center;">Inputs</td>
 <td style="text-align: center;">Projection timeframe, current hospitalizations, mitigation</td>
 <td style="text-align: center;">Total population, age distribution, epidemiology info, mitigation, severity</td>
-</tr>
+<td class="divider"><hr /></td>
+
 <tr class="odd">
 <td style="text-align: center;">Outputs</td>
 <td style="text-align: center;">Projected cases over time, ICU use</td>
 <td style="text-align: center;">Projected cases over time, ICU use</td>
+<td class="divider"><hr /></td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">Source</td>
