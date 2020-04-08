@@ -1071,6 +1071,15 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
         
         
         
+        hospCounty <- subset(HospUtlzCounty, fips %in% IncludedCounties$FIPS)
+        #Finds number of hospitals in radius
+        TotalBeds<-sum(hospCounty$num_staffed_beds)
+        #get historic utilization
+        hospCounty$bedsUsed <- hospCounty$bed_utilization * hospCounty$num_staffed_beds
+        totalUsedBeds <- sum(hospCounty$bedsUsed)
+        baseUtlz <- totalUsedBeds/TotalBeds
+        
+        
         
         projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID)) +
             geom_line() + 
@@ -1078,6 +1087,9 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
             scale_fill_manual(values = c("tan4", "cadetblue", "gray"))+
             geom_ribbon(aes(ymin = `Lower Bound Hospitalizations`, ymax = `Upper Bound Hospitalizations`), 
                         alpha = .2) +
+            geom_hline(yintercept = TotalBeds * (1-baseUtlz),
+                       linetype = "solid",
+                       color = "red") +
             ggtitle("Projected Hospitalizations")+
             ylab("Daily Hospitalizations")+
             theme_bw() + 
