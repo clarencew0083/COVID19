@@ -1081,10 +1081,11 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
         
         
         
-        projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID)) +
+        projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID, linetype = ID)) +
             geom_line() + 
             scale_colour_manual(values=c("tan", "blue", "black"))+
             scale_fill_manual(values = c("tan4", "cadetblue", "gray"))+
+            scale_linetype_manual(values=c("dashed", "dashed", "solid"))+
             geom_ribbon(aes(ymin = `Lower Bound Hospitalizations`, ymax = `Upper Bound Hospitalizations`), 
                         alpha = .2) +
             geom_hline(yintercept = TotalBeds * (1-baseUtlz),
@@ -1295,10 +1296,11 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
         
         
         
-        projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Fatalities`, color = ID, fill = ID)) +
+        projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Fatalities`, color = ID, fill = ID, linetype = ID)) +
             geom_line() + 
             scale_colour_manual(values=c("tan", "blue", "black"))+
             scale_fill_manual(values = c("tan4", "cadetblue", "gray"))+
+            scale_linetype_manual(values = c("dashed", "dashed", "solid"))+
             geom_ribbon(aes(ymin = `Lower Bound Fatalities`, ymax = `Upper Bound Fatalities`), 
                         alpha = .2) +
             ggtitle("Fatalities")+
@@ -1551,10 +1553,11 @@ NationalOverlayPlot<-function(SocialDistance, DaysForecasted){
     OverlayData<-rbind(HistoricalData, OverlayData)
     
     
-    projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID)) +
+    projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID, linetype = ID)) +
         geom_line() + 
         scale_colour_manual(values=c("tan", "blue", "black"))+
         scale_fill_manual(values = c("tan4", "cadetblue", "gray"))+
+        scale_linetype_manual(values = c("dashed", "dashed", "solid"))+
         geom_ribbon(aes(ymin = `Lower Bound Hospitalizations`, ymax = `Upper Bound Hospitalizations`), 
                     alpha = .2) +
         ggtitle("Projected Hospitalizations")+
@@ -1803,10 +1806,11 @@ NationalOverlayPlot<-function(SocialDistance, DaysForecasted){
     OverlayData<-rbind(HistoricalData, OverlayData)
     
     
-    projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID)) +
+    projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID, linetpye = ID)) +
         geom_line() + 
         scale_colour_manual(values=c("tan", "blue", "black"))+
         scale_fill_manual(values = c("tan4", "cadetblue", "gray"))+
+        scale_linetype_manual(values = c("dashed", "dashed", "solid"))+
         geom_ribbon(aes(ymin = `Lower Bound Hospitalizations`, ymax = `Upper Bound Hospitalizations`), 
                     alpha = .2) +
         ggtitle("Projected Hospitalizations")+
@@ -1962,10 +1966,11 @@ CHIMENationalPlot<-function(SocialDistance, DaysForecasted){
     OverlayData<-rbind(HistoricalData, OverlayData)
     
     
-    projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID)) +
-        geom_line(linetype = "dashed", size = 0.75) +
+    projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID, linetpye = ID)) +
+        geom_line() +
         scale_colour_manual(values=c("tan","black"))+
         scale_fill_manual(values = c("tan4", "gray"))+
+        scale_linetype_manual(values = c("dashed", "solid"))+
         geom_ribbon(aes(ymin = `Lower Bound Hospitalizations`, ymax = `Upper Bound Hospitalizations`), 
                     alpha = .2) +
         #scale_colour_manual(values=c("Blue", "Orange", "Red"))+
@@ -2016,10 +2021,11 @@ IHMENationalProjections<-function(){
         OverlayData<- dplyr::filter(IHMENationalData, ForecastDate >= Sys.Date())
         OverlayData<-rbind(HistoricalData, OverlayData)
         
-        projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID)) +
-            geom_line(linetype = "dashed", size = 0.75) +
+        projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID, linetype = ID)) +
+            geom_line() +
             scale_colour_manual(values=c("blue","black"))+
             scale_fill_manual(values = c("cadetblue", "gray"))+
+            scale_linetype_manual(values = c("dashed", "solid"))+
             geom_ribbon(aes(ymin = `Lower Bound Hospitalizations`, ymax = `Upper Bound Hospitalizations`), 
                         alpha = .2) +
             #scale_colour_manual(values=c("Blue", "Orange", "Red"))+
@@ -2457,12 +2463,15 @@ IHMELocalProjections<-function(MyCounties, IncludedHospitals, ChosenBase, Statis
         IHME_Region<-data.frame(IHME_Region$date, IHME_Region$allbed_mean, IHME_Region$allbed_lower, IHME_Region$allbed_upper)
         colnames(IHME_Region)<-c("ForecastDate", "Expected Hospitalizations", "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
         IHME_Region<- dplyr::filter(IHME_Region, ForecastDate >= Sys.Date())
+        IHME_Region$ID<-rep("ID", nrow(IHME_Region))
+        HistoricalData$ID<-rep("ID", nrow(HistoricalData))
         
         IHME_Region<-rbind(HistoricalData,IHME_Region)
         IHME_Region$ForecastDate<-as.Date(IHME_Region$ForecastDate)
         
         r1 <- ggplot(data=IHME_Region, aes(x=ForecastDate, y=`Expected Hospitalizations`, ymin=`Lower Bound Hospitalizations`, ymax=`Upper Bound Hospitalizations`)) +
             geom_line(linetype = "dashed", size = 0.75) +
+            scale_linetype_manual(values = c("dashed", "solid"))+
             geom_ribbon(alpha=0.3, fill = "cadetblue2") +
             geom_hline(yintercept = TotalBeds * (1-baseUtlz),
                        linetype = "solid",
