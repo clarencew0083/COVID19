@@ -1087,7 +1087,9 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
             labs(color = "ID")
         
         
-        ggplotly(projections)
+        projections <- ggplotly(projections)
+        projections <- projections %>% config(displayModeBar = FALSE)
+        projections
         
     } else {
         
@@ -1295,8 +1297,9 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
             labs(color = "ID")
         
         
-        ggplotly(projections)
-        
+        projections <- ggplotly(projections)
+        projections <- projections %>% config(displayModeBar = FALSE)
+        projections
     }
         
     }
@@ -1348,7 +1351,9 @@ PlotLocalChoro<-function(IncludedCounties, ChosenBase, TypofPlot){
                   axis.ticks = element_blank(), axis.title = element_blank()) +
             scale_fill_viridis("Cases")
         
-        ggplotly(PlotCovidLocal)
+        PlotCovidLocal <- ggplotly(PlotCovidLocal)
+        PlotCovidLocal <- PlotCovidLocal %>% config(displayModeBar = FALSE)
+        PlotCovidLocal
         
     } else  {
         BaseStats<-dplyr::filter(AFBaseLocations, Base == ChosenBase)
@@ -1373,8 +1378,9 @@ PlotLocalChoro<-function(IncludedCounties, ChosenBase, TypofPlot){
                   axis.ticks = element_blank(), axis.title = element_blank()) +
             scale_fill_viridis("log(Cases)")
         
-        ggplotly(PlotCovidLocal)
-        
+        PlotCovidLocal <- ggplotly(PlotCovidLocal)
+        PlotCovidLocal <- PlotCovidLocal %>% config(displayModeBar = FALSE)
+        PlotCovidLocal
     }
     
     
@@ -1549,8 +1555,9 @@ NationalOverlayPlot<-function(SocialDistance, DaysForecasted){
         scale_y_continuous(labels = comma)
     
     
-    ggplotly(projections)
-    
+    projections <- ggplotly(projections)
+    projections <- projections %>% config(displayModeBar = FALSE)
+    projections
 }
 
 
@@ -1707,7 +1714,9 @@ CHIMENationalPlot<-function(SocialDistance, DaysForecasted){
         scale_y_continuous(labels = comma)
     
     
-    ggplotly(projections)
+    projections <- ggplotly(projections)
+    projections <- projections %>% config(displayModeBar = FALSE)
+    projections
 }
 
 IHMENationalProjections<-function(){
@@ -1758,7 +1767,9 @@ IHMENationalProjections<-function(){
             labs(color='')+
             scale_y_continuous(labels = comma)
         
-        ggplotly(projections)
+        projections <- ggplotly(projections)
+        projections <- projections %>% config(displayModeBar = FALSE)
+        projections
 }
 
 
@@ -1936,7 +1947,9 @@ CHIMELocalPlot<-function(SocialDistance, ForecastedDays, IncludedCounties, Stati
             scale_x_date(date_breaks = "3 week")+
             labs(color='')
         
-        ggplotly(projections)
+        projections <- ggplotly(projections)
+        projections <- projections %>% config(displayModeBar = FALSE)
+        projections
         
     } else {
         
@@ -2113,8 +2126,9 @@ CHIMELocalPlot<-function(SocialDistance, ForecastedDays, IncludedCounties, Stati
             scale_x_date(date_breaks = "3 week")+
             labs(color='')
         
-        ggplotly(projections)
-        
+        projections<- ggplotly(projections)
+        projections <- projections %>% config(displayModeBar = FALSE)
+        projections
     }
     
 }
@@ -2181,7 +2195,9 @@ IHMELocalProjections<-function(MyCounties, IncludedHospitals, ChosenBase, Statis
                   panel.border = element_blank()) +
             scale_x_date(date_breaks = "2 week")
         
-        ggplotly(r1)
+        r1<- ggplotly(r1)
+        r1 <- r1 %>% config(displayModeBar = FALSE)
+        r1
         
     } else {
         #Creating the stats and dataframes determined by the base we choose to look at.
@@ -2244,8 +2260,9 @@ IHMELocalProjections<-function(MyCounties, IncludedHospitals, ChosenBase, Statis
                   panel.border = element_blank()) +
             scale_x_date(date_breaks = "2 week")
         
-        ggplotly(r1)
-        
+        r1 <- ggplotly(r1)
+        r1 <- r1 %>% config(displayModeBar = FALSE)
+        r1
     }
 }
 
