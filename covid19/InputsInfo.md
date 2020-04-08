@@ -91,36 +91,44 @@ customize dashboard assessments and projections.*
 <thead>
 <tr class="header">
 <th style="text-align: left;">Measures Taken</th>
+<th></th>
 <th style="text-align: center;">Total Percent Reduction of Social Contact</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">SC</td>
+<td></td>
 <td style="text-align: center;">4%</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">NE</td>
+<td></td>
 <td style="text-align: center;">8%</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">SC + NE</td>
+<td></td>
 <td style="text-align: center;">12%</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">SD</td>
+<td></td>
 <td style="text-align: center;">15%</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">SC + SD</td>
+<td></td>
 <td style="text-align: center;">19%</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">NE + SD</td>
+<td></td>
 <td style="text-align: center;">23%</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">SC + NE + SD</td>
+<td></td>
 <td style="text-align: center;">27%</td>
 </tr>
 </tbody>
