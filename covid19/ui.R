@@ -102,18 +102,14 @@ ui <- tagList(
                                                        value = 15)
                                        ),
                                        br(),
-                                       #actionButton("refresh", "Refresh", width = "90%"),
 
-                                       div(style="text-align:center", hr(), "Generate Report"),
+                                       div(style="text-align:center", tags$hr(style="border-color: #444;"), "Generate & Download Report:"),
                                        br(),
                                        fluidRow(
-                                           downloadButton("report", "Download", class = "butt"),
-                                           tags$head(tags$style(".butt{background-color:#add8e6;} .butt{color: white;}")),
+                                           downloadButton("report", "Generate Report", class = "butt"),
+                                           tags$style(".skin-black .sidebar .butt{background-color:#15824d;color: white;border-color:white;}"),
                                            align = "center"
-                                       ),
-
-                                       hr()
-                                       # downloadButton("report", "Generate report")
+                                       )
 
                                        # fluidRow(
                                        #     valueBox("LOW RISK", subtitle ="Mission Risk **notional ex.**",color= "green",width = 12)
