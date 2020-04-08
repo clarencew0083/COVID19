@@ -1072,6 +1072,7 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
             geom_ribbon(aes(ymin = `Lower Bound Hospitalizations`, ymax = `Upper Bound Hospitalizations`), 
                         alpha = .2) +
             ggtitle("Projected Hospitalizations")+
+            ylab("Daily Hospitalizations")+
             theme_bw() + 
             theme(plot.title = element_text(face = "bold", size = 15, family = "sans"),
                   axis.title = element_text(face = "bold", size = 11, family = "sans"),
@@ -1279,7 +1280,7 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
             scale_fill_manual(values = c("tan4", "cadetblue", "gray"))+
             geom_ribbon(aes(ymin = `Lower Bound Fatalities`, ymax = `Upper Bound Fatalities`), 
                         alpha = .2) +
-            ggtitle("Projected Fatalities")+
+            ggtitle("Fatalities")+
             theme_bw() + 
             theme(plot.title = element_text(face = "bold", size = 15, family = "sans"),
                   axis.title = element_text(face = "bold", size = 11, family = "sans"),
@@ -1532,6 +1533,7 @@ NationalOverlayPlot<-function(SocialDistance, DaysForecasted){
         geom_ribbon(aes(ymin = `Lower Bound Hospitalizations`, ymax = `Upper Bound Hospitalizations`), 
                     alpha = .2) +
         ggtitle("Projected Hospitalizations")+
+        ylab("Daily Hospitalizations")+
         theme_bw() + 
         theme(plot.title = element_text(face = "bold", size = 15, family = "sans"),
               axis.title = element_text(face = "bold", size = 11, family = "sans"),
@@ -2096,7 +2098,7 @@ CHIMELocalPlot<-function(SocialDistance, ForecastedDays, IncludedCounties, Stati
             geom_ribbon(alpha=0.3, fill = "tan4") +
             #scale_colour_manual(values=c("Blue", "Orange", "Red"))+
             xlab('Date') +
-            ylab('Daily Hospitalizations') +
+            ylab('Fatalities') +
             ggtitle("CHIME Projected Fatalities") +
             theme_bw() + 
             theme(plot.title = element_text(face = "bold", size = 15, family = "sans"),
@@ -2228,8 +2230,8 @@ IHMELocalProjections<-function(MyCounties, IncludedHospitals, ChosenBase, Statis
             # geom_hline(yintercept = TotalBedsCounty * 0.5,
             #            linetype = "solid",
             #            color = "red") +
-            labs(title = paste("IHME Projected Daily Fatalities"),
-                 x = "Date", y = "Daily Fatalities") +
+            labs(title = paste("IHME Projected Fatalities"),
+                 x = "Date", y = "Fatalities") +
             theme_bw() +
             theme(plot.title = element_text(face = "bold", size = 15, family = "sans"),
                   axis.title = element_text(face = "bold", size = 11, family = "sans"),
