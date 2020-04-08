@@ -1173,6 +1173,11 @@ NationalOverlayPlot<-function(SocialDistance, DaysForecasted){
         summarise(allbed_upper = sum(allbed_upper))
     IHMENationalData<-cbind(Dataframe1, Dataframe2$allbed_lower, Dataframe3$allbed_upper)
     
+    HistoricalData<-colSums(CovidConfirmedCases[,5:length(CovidConfirmedCases)])
+    HistoricalDates<-seq(as.Date("2020-01-22"), length=length(HistoricalData), by="1 day")
+    HistoricalData<-data.frame(HistoricalDates, HistoricalData*.21, HistoricalData*.15, HistoricalData*.27)
+    colnames(HistoricalData)<-c("ForecastDate", "Expected Hospitalizations", "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
+    
     
     ####################################################################################
     #Mean Estimate
@@ -1206,7 +1211,7 @@ NationalOverlayPlot<-function(SocialDistance, DaysForecasted){
                                socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,
                                ventilatortime,daysforecasted,Ro, .5)
     
-    MyDates<-seq(Sys.Date()-(length(CovidConfirmedCases)-80), length=daysforecasted, by="1 day")
+    MyDates<-seq(Sys.Date()-(length(CovidConfirmedCases)-20), length=daysforecasted, by="1 day")
     DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
     TotalData<-data.frame(MyDates, SEIARProj$sir$hos_cum)
     colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases")
@@ -1290,16 +1295,19 @@ NationalOverlayPlot<-function(SocialDistance, DaysForecasted){
     colnames(IHMENationalData)<-c("ForecastDate", "Expected Hospitalizations", "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
     DailyData$ID<-rep("CHIME",nrow(DailyData))
     IHMENationalData$ID<-rep("IHME",nrow(IHMENationalData))
+    HistoricalData$ID<-rep("Past Data", nrow(HistoricalData))
     OverlayData<-rbind(DailyData,IHMENationalData)
     OverlayData$ForecastDate<-as.Date(OverlayData$ForecastDate)
     
+    OverlayData<- dplyr::filter(OverlayData, ForecastDate >= Sys.Date())
     
+    OverlayData<-rbind(HistoricalData, OverlayData)
     
     
     projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID)) +
         geom_line() + 
-        scale_colour_manual(values=c("tan", "blue"))+
-        scale_fill_manual(values = c("tan4", "cadetblue"))+
+        scale_colour_manual(values=c("tan", "blue", "black"))+
+        scale_fill_manual(values = c("tan4", "cadetblue", "gray"))+
         geom_ribbon(aes(ymin = `Lower Bound Hospitalizations`, ymax = `Upper Bound Hospitalizations`), 
                     alpha = .2) +
         ggtitle("Projected Hospitalizations")+
@@ -1330,6 +1338,11 @@ CHIMENationalPlot<-function(SocialDistance, DaysForecasted){
     NationalPop <-  sum(CountyInfo$Population)
     NationalCases<-sum(rev(CovidConfirmedCases)[1]-rev(CovidConfirmedCases)[8])
     
+    HistoricalData<-colSums(CovidConfirmedCases[,5:length(CovidConfirmedCases)])
+    HistoricalDates<-seq(as.Date("2020-01-22"), length=length(HistoricalData), by="1 day")
+    HistoricalData<-data.frame(HistoricalDates, HistoricalData*.21, HistoricalData*.15, HistoricalData*.27)
+    colnames(HistoricalData)<-c("ForecastDate", "Expected Hospitalizations", "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
+    
     
     #Next we use the calculated values, along with estimated values from the CDC. 
     #The only input we want from the user is the social distancing rate. For this example, we just use 0.5
@@ -1357,7 +1370,7 @@ CHIMENationalPlot<-function(SocialDistance, DaysForecasted){
                                socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,
                                ventilatortime,daysforecasted,Ro, .5)
     
-    MyDates<-seq(Sys.Date()-(length(CovidConfirmedCases)-65), length=daysforecasted, by="1 day")
+    MyDates<-seq(Sys.Date()-(length(CovidConfirmedCases)-20), length=daysforecasted, by="1 day")
     DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
     TotalData<-data.frame(MyDates, SEIARProj$sir$hos_cum)
     colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases")
@@ -1438,16 +1451,20 @@ CHIMENationalPlot<-function(SocialDistance, DaysForecasted){
     DailyData$`Lower Bound Hospitalizations` <- round(DailyData$`Lower Bound Hospitalizations`,0)
     DailyData$`Upper Bound Hospitalizations` <- round(DailyData$`Upper Bound Hospitalizations`,0)
     DailyData<-DailyData[-1,]
+    DailyData$ID<-rep("CHIME", nrow(DailyData))
+    HistoricalData$ID<-rep("Past Data", nrow(HistoricalData))
+    
+    OverlayData<- dplyr::filter(DailyData, ForecastDate >= Sys.Date())
+    
+    OverlayData<-rbind(HistoricalData, OverlayData)
     
     
-    projections <-  ggplot(data = DailyData, 
-                           aes(x=ForecastDate,
-                               y=`Expected Hospitalizations`,
-                               ymin = `Lower Bound Hospitalizations`,
-                               ymax = `Upper Bound Hospitalizations`)) + 
-        #geom_line(aes(x=ForecastDate, y=DailyData$`Expected Daily Cases`, ymin = DailyData$`Minimum Daily Cases` , ymax = DailyData$`Maximum Daily Cases`)) +
+    projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID)) +
         geom_line(linetype = "dashed", size = 0.75) +
-        geom_ribbon(alpha=0.3, fill = "tan4") +
+        scale_colour_manual(values=c("tan","black"))+
+        scale_fill_manual(values = c("tan4", "gray"))+
+        geom_ribbon(aes(ymin = `Lower Bound Hospitalizations`, ymax = `Upper Bound Hospitalizations`), 
+                    alpha = .2) +
         #scale_colour_manual(values=c("Blue", "Orange", "Red"))+
         xlab('Date') +
         ylab('Daily Hospitalizations') +
@@ -1484,14 +1501,22 @@ IHMENationalProjections<-function(){
     IHMENationalData<-cbind(Dataframe1, Dataframe2$allbed_lower, Dataframe3$allbed_upper)
     colnames(IHMENationalData)<-c("ForecastDate", "Expected Hospitalizations", "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
     
-    projections <-  ggplot(data = IHMENationalData, 
-                           aes(x=ForecastDate,
-                               y=`Expected Hospitalizations`,
-                               ymin = `Lower Bound Hospitalizations`,
-                               ymax = `Upper Bound Hospitalizations`)) + 
-        #geom_line(aes(x=ForecastDate, y=DailyData$`Expected Daily Cases`, ymin = DailyData$`Minimum Daily Cases` , ymax = DailyData$`Maximum Daily Cases`)) +
+    HistoricalData<-colSums(CovidConfirmedCases[,5:length(CovidConfirmedCases)])
+    HistoricalDates<-seq(as.Date("2020-01-22"), length=length(HistoricalData), by="1 day")
+    HistoricalData<-data.frame(HistoricalDates, HistoricalData*.21, HistoricalData*.15, HistoricalData*.27)
+    colnames(HistoricalData)<-c("ForecastDate", "Expected Hospitalizations", "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
+    
+    IHMENationalData$ID<-rep("IHME", nrow(IHMENationalData))
+    HistoricalData$ID<-rep("Past Data", nrow(HistoricalData))
+    OverlayData<- dplyr::filter(IHMENationalData, ForecastDate >= Sys.Date())
+    OverlayData<-rbind(HistoricalData, OverlayData)
+    
+    projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID)) +
         geom_line(linetype = "dashed", size = 0.75) +
-        geom_ribbon(alpha=0.3, fill = "cadetblue2") +
+        scale_colour_manual(values=c("blue","black"))+
+        scale_fill_manual(values = c("cadetblue", "gray"))+
+        geom_ribbon(aes(ymin = `Lower Bound Hospitalizations`, ymax = `Upper Bound Hospitalizations`), 
+                    alpha = .2) +
         #scale_colour_manual(values=c("Blue", "Orange", "Red"))+
         xlab('Date') +
         ylab('Daily Hospitalizations') +
