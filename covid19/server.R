@@ -88,7 +88,7 @@ server <- function(input, output) {
     output$HospitalUtilization <- renderValueBox({
         MyCounties<-GetCounties(input$Base,input$Radius)
         MyHospitals<-GetHospitals(input$Base,input$Radius)
-        valueBox(subtitle = "Local Hospital Utilization *Partially Notional*",
+        valueBox(subtitle = "Estimated Local Hospital Bed Utilization",
                  HospitalIncreases(MyCounties, MyHospitals),
                  icon = icon("hospital"),
                  color = "navy")
@@ -100,20 +100,26 @@ server <- function(input, output) {
         MyCounties<-GetCounties(input$Base,input$Radius)
         MyHospitals<-GetHospitals(input$Base,input$Radius)
         
+        #use new data set, remember to clean code later
+        hospCounty <- subset(HospUtlzCounty, fips %in% MyCounties$FIPS)
         #Finds number of hospitals in radius
-        TotalBeds<-sum(MyHospitals$BEDS)
+        TotalBeds<-sum(hospCounty$num_staffed_beds)
+        #get historic utilization
+        hospCounty$bedsUsed <- hospCounty$bed_utilization * hospCounty$num_staffed_beds
+        totalUsedBeds <- sum(hospCounty$bedsUsed)
+        baseUtlz <- totalUsedBeds/TotalBeds
         #Finds which counties in given radius. Also Give county statistics
         CovidCounties<-subset(CovidConfirmedCases, CountyFIPS %in% MyCounties$FIPS)
         changeC <- sum(rev(CovidCounties)[,1] - rev(CovidCounties)[,2])
         TotalHospital<-sum(CovidCounties[,ncol(CovidCounties)])
         NotHospital<-sum(rev(CovidCounties)[,7])
         StillHospital<-ceiling((TotalHospital-NotHospital))
-        Upper<- round(((StillHospital+changeC*.1)/TotalBeds+.5)*100,1)
+        Upper<- round(((StillHospital+changeC*.1)/TotalBeds+baseUtlz)*100,1)
         #Lower<- round(((StillHospital+changeC*.207)/TotalBeds+.55)*100,1)
         paste(Upper," %", sep = "") 
         
         
-        TotalBeds<-sum(MyHospitals$BEDS)
+        TotalBeds<-sum(hospCounty$num_staffed_beds)
         
         #Finds which counties in given radius. Also Give county statistics
         CovidCounties<-subset(CovidConfirmedCases, CountyFIPS %in% MyCounties$FIPS)
@@ -125,13 +131,13 @@ server <- function(input, output) {
         TotalHospital<-sum(rev(CovidCounties)[,1])
         NotHospital<-sum(rev(CovidCounties)[,6])
         StillHospital<-ceiling((TotalHospital-NotHospital))
-        Upper<-(signif(((StillHospital+changeC*.1)/TotalBeds+.5)*100,3))
+        Upper<-(signif(((StillHospital+changeC*.1)/TotalBeds+baseUtlz)*100,3))
         #Lower<-(signif(((StillHospital+changeC*.207)/TotalBeds+.6)*100,3))
         # Yesterday
         TotalHospitaly<-sum(CovidCounties[,ncol(CovidCounties)-1])
         NotHospitaly<-sum(CovidCounties[,n-1])
         StillHospitaly<-ceiling((TotalHospitaly-NotHospitaly))
-        Uppery<-(signif(((StillHospitaly+changey*.1)/TotalBeds+.5)*100,3))
+        Uppery<-(signif(((StillHospitaly+changey*.1)/TotalBeds+baseUtlz)*100,3))
         #Lowery<-(signif(((StillHospitaly+changey*.207)/TotalBeds+.6)*100,3))
         chng <- round((Upper-Uppery)/2, 1)
         

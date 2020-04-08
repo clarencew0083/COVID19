@@ -66,6 +66,7 @@ HospitalInfo <- as.data.frame(data.table::fread("https://github.com/treypujats/C
 CovidDeaths<-as.data.frame(data.table::fread("https://usafactsstatic.blob.core.windows.net/public/data/covid-19/covid_deaths_usafacts.csv"))
 himd <- as.data.frame(data.table::fread("https://github.com/treypujats/COVID19/blob/master/covid19/data/himd.rda?raw=true"))
 cimd <- as.data.frame(data.table::fread("https://github.com/treypujats/COVID19/blob/master/covid19/data/cimd.rda?raw=true"))
+HospUtlzCounty <- read.csv("https://github.com/treypujats/COVID19/raw/master/covid19/data/county_hospitals.csv")
 #AFBaseLocations[154,]<-c("Pentagon", "DC", "HQ", "Something", "AF", 38.8719, -77.0563 )
 
 #Updating data frames to ensure they are filled and match the data we reference later in the scripts
@@ -230,15 +231,21 @@ CalculateDeaths<-function(IncludedCounties){
 }
 
 HospitalIncreases<-function(IncludedCounties, IncludedHospitals){
+    #use new data set, remember to clean code later
+    hospCounty <- subset(HospUtlzCounty, fips %in% IncludedCounties$FIPS)
     #Finds number of hospitals in radius
-    TotalBeds<-sum(IncludedHospitals$BEDS)
+    TotalBeds<-sum(hospCounty$num_staffed_beds)
+    #get historic utilization
+    hospCounty$bedsUsed <- hospCounty$bed_utilization * hospCounty$num_staffed_beds
+    totalUsedBeds <- sum(hospCounty$bedsUsed)
+    baseUtlz <- totalUsedBeds/TotalBeds
     #Finds which counties in given radius. Also Give county statistics
     CovidCounties<-subset(CovidConfirmedCases, CountyFIPS %in% IncludedCounties$FIPS)
     changeC <- sum(rev(CovidCounties)[,1] - rev(CovidCounties)[,2])
     TotalHospital<-sum(CovidCounties[,ncol(CovidCounties)])
     NotHospital<-sum(rev(CovidCounties)[,7])
     StillHospital<-ceiling((TotalHospital-NotHospital))
-    Upper<- round(((StillHospital+changeC*.1)/TotalBeds+.5)*100,1)
+    Upper<- round(((StillHospital+changeC*.1)/TotalBeds+baseUtlz)*100,1)
     #Lower<- round(((StillHospital+changeC*.207)/TotalBeds+.55)*100,1)
     paste(Upper," %", sep = "") 
 }
