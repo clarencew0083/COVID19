@@ -44,11 +44,13 @@ dashboard for their AF installation.*
 
 *Consists of additional user input options that can be used to further
 customize dashboard assessments and projections.*
+1. **Choose Projected Statistic**: Choose to view projections for 
+    daily hospitalizations or cumulative deaths
 
-1.  **Projection Days**: How many days into the future the dashboard
+2.  **Projection Days**: How many days into the future the dashboard
     displays predictive model projections.
 
-2.  **Percent Social Distancing Reduction**: How much reduction in
+3.  **Percent Social Distancing Reduction**: How much reduction in
     transmission is realized from social distancing measures. Studies
     show the maximum reduction without eliminating essential
     interactions is 30%. Ranges from 0 - 40% with a default of 10%. See
@@ -89,36 +91,44 @@ customize dashboard assessments and projections.*
 <thead>
 <tr class="header">
 <th style="text-align: left;">Measures Taken</th>
+<th></th>
 <th style="text-align: center;">Total Percent Reduction of Social Contact</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">SC</td>
+<td></td>
 <td style="text-align: center;">4%</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">NE</td>
+<td></td>
 <td style="text-align: center;">8%</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">SC + NE</td>
+<td></td>
 <td style="text-align: center;">12%</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">SD</td>
+<td></td>
 <td style="text-align: center;">15%</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">SC + SD</td>
+<td></td>
 <td style="text-align: center;">19%</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">NE + SD</td>
+<td></td>
 <td style="text-align: center;">23%</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">SC + NE + SD</td>
+<td></td>
 <td style="text-align: center;">27%</td>
 </tr>
 </tbody>
