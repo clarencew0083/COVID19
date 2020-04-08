@@ -1,6 +1,6 @@
 # COVID19
 
-The app is hosted on shiny web servers and can be used by following the link below.
+The app is hosted on shiny web servers and can be used by following the link here:
 https://covid19dash.shinyapps.io/covid19/
 
 
