@@ -1554,7 +1554,6 @@ NationalOverlayPlot<-function(SocialDistance, DaysForecasted){
         labs(color = "ID")+
         scale_y_continuous(labels = comma)
     
-<<<<<<< HEAD
     ggplotly(projections)
     
 }
@@ -1808,8 +1807,7 @@ NationalOverlayPlot<-function(SocialDistance, DaysForecasted){
     
     
     ggplotly(projections)
-=======
->>>>>>> 631e42a4c07425bab792454684673cea96ec0190
+
     
     projections <- ggplotly(projections)
     projections <- projections %>% config(displayModeBar = FALSE)
