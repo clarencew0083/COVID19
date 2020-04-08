@@ -100,7 +100,7 @@ ui <- tagList(
                                        ),
                                        br(),
                                        #actionButton("refresh", "Refresh", width = "90%"),
-                                       hr(),
+                                       hr()
                                        # downloadButton("report", "Generate report")
                                        # fluidRow(
                                        #     valueBox("LOW RISK", subtitle ="Mission Risk **notional ex.**",color= "green",width = 12)
