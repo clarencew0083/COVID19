@@ -5,13 +5,67 @@ are adapted from the IHME model and the CHIME model. Each model is
 designed with specific assumptions and parameters. The table below
 offers a quick comparison of the two models.
 
-    mod <- c("Institution","Modeling Approach","Strengths","Limitations","Location Concentration","Inputs","Outputs","Source")
-    ihme <- c("IHME of University of Washington","Data-driven, Statistical","DoD Supported, ICU Capacity","Relies on initial (possibly unreliable) data","U.S. and individual states","Projection timeframe, current hospitalizations, mitigation","Projected cases over time, ICU use","https://covid19.healthdata.org/projections/")
-    chime <- c("University of Pennsylvania","SIR-based, deterministic","DoD Suported, ICU Capactiy","Lacks seasonal factors, deterministic","Specific regions with states","Total population, age distribution, epidemiology info, mitigation, severity","Projected cases over time, ICU use","https://penn-chime.phl.io/")
-    model.comp <- cbind(mod, ihme, chime)
-    colnames(model.comp) <- c("Model","IHME","CHIME")
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: center;">Model</th>
+<th style="text-align: center;">IHME</th>
+<th style="text-align: center;">CHIME</th>
 
-    #fill in data table code here
+<td class="divider"><hr /></td>
+</tr>
+
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">Institution</td>
+<td style="text-align: center;">IHME of University of Washington</td>
+<td style="text-align: center;">University of Pennsylvania</td>
+<td class="divider"><hr /></td>
+
+<tr class="even">
+<td style="text-align: center;">Modeling Approach</td>
+<td style="text-align: center;">Data-driven, Statistical</td>
+<td style="text-align: center;">SIR-based, deterministic</td>
+<td class="divider"><hr /></td>
+
+<tr class="odd">
+<td style="text-align: center;">Strengths</td>
+<td style="text-align: center;">DoD Supported, ICU Capacity</td>
+<td style="text-align: center;">DoD Suported, ICU Capactiy</td>
+<td class="divider"><hr /></td>
+
+<tr class="even">
+<td style="text-align: center;">Limitations</td>
+<td style="text-align: center;">Relies on initial data</td>
+<td style="text-align: center;">Lacks seasonal factors, deterministic</td>
+<td class="divider"><hr /></td>
+
+<tr class="odd">
+<td style="text-align: center;">Location Concentration</td>
+<td style="text-align: center;">U.S. and individual states</td>
+<td style="text-align: center;">Specific regions with states</td>
+<td class="divider"><hr /></td>
+
+<tr class="even">
+<td style="text-align: center;">Inputs</td>
+<td style="text-align: center;">Projection timeframe, current hospitalizations, mitigation</td>
+<td style="text-align: center;">Total population, age distribution, epidemiology info, mitigation, severity</td>
+<td class="divider"><hr /></td>
+
+<tr class="odd">
+<td style="text-align: center;">Outputs</td>
+<td style="text-align: center;">Projected cases over time, ICU use</td>
+<td style="text-align: center;">Projected cases over time, ICU use</td>
+<td class="divider"><hr /></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">Source</td>
+<td style="text-align: center;"><a href="https://covid19.healthdata.org/projections/" class="uri">https://covid19.healthdata.org/projections/</a></td>
+<td style="text-align: center;"><a href="https://penn-chime.phl.io/" class="uri">https://penn-chime.phl.io/</a></td>
+</tr>
+</tbody>
+</table>
 
 ### IHME
 
