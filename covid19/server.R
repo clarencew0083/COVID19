@@ -185,6 +185,7 @@ server <- function(input, output) {
     #              icon = icon("hospital"),
     #              color = "navy")
     # })
+    
     # Output line plots for the dashboard ----------------------------------------------------------------------------------------------------------------------------------------------------
     
     
@@ -243,77 +244,22 @@ server <- function(input, output) {
     
     #Create IHME plot by State projected hospitalization 
     output$IHME_State_Hosp<-renderPlotly({
-        
-        #Creating the stats and dataframes determined by the base we choose to look at.
-        BaseState<-dplyr::filter(AFBaseLocations, Base == input$Base)
-        IncludedHospitals<-GetHospitals(input$Base,input$Radius)
-        IHME_State <- dplyr::filter(IHME_Model, State == toString(BaseState$State[1]))
-        TotalBedsCounty <- sum(IncludedHospitals$BEDS)
 
-        #Get regional and state populations
-        MyCounties <- GetCounties(input$Base,input$Radius)
-        CovidCounties<-subset(CovidConfirmedCases, CountyFIPS %in% MyCounties$FIPS)
-        HistoricalData<-colSums(CovidCounties[,5:length(CovidCounties)])
-        HistoricalDates<-seq(as.Date("2020-01-22"), length=length(HistoricalData), by="1 day")
-        HistoricalData<-data.frame(HistoricalDates, HistoricalData*.21, HistoricalData*.15, HistoricalData*.27)
-        colnames(HistoricalData)<-c("ForecastDate", "Expected Hospitalizations", "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
+        IncludedHospitals<-GetHospitals(input$Base, input$Radius)
+        MyCounties <- GetCounties(input$Base, input$Radius)
+        IHMELocalProjections(MyCounties, IncludedHospitals, input$Base, input$StatisticType)
         
         
-        StPopList <- dplyr::filter(CountyInfo, State == toString(BaseState$State[1]))
-        RegPop <- sum(MyCounties$Population)
-        StPop <- sum(StPopList$Population)
-
-        # Use Population ratio to scale IHME
-        PopRatio <- RegPop/StPop
-
-        # Get total hospital bed number across state
-        IncludedHospitalsST <- dplyr::filter(HospitalInfo, STATE == toString(BaseState$State[1]))
-        TotalBedsState <- sum(IncludedHospitalsST$BEDS)
-
-        # Calculate bed ratio
-        BedProp <- TotalBedsCounty/TotalBedsState
-
-        # Apply ratio's to IHME data
-        IHME_Region <- IHME_State
-        IHME_Region$allbed_mean = round(IHME_State$allbed_mean*PopRatio)
-        IHME_Region$allbed_lower = round(IHME_State$allbed_lower*PopRatio)
-        IHME_Region$allbed_upper = round(IHME_State$allbed_upper*PopRatio)
-        IHME_Region<-data.frame(IHME_Region$date, IHME_Region$allbed_mean, IHME_Region$allbed_lower, IHME_Region$allbed_upper)
-        colnames(IHME_Region)<-c("ForecastDate", "Expected Hospitalizations", "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
-        IHME_Region<- dplyr::filter(IHME_Region, ForecastDate >= Sys.Date())
-        
-        IHME_Region<-rbind(HistoricalData,IHME_Region)
-        IHME_Region$ForecastDate<-as.Date(IHME_Region$ForecastDate)
-
-        r1 <- ggplot(data=IHME_Region, aes(x=ForecastDate, y=`Expected Hospitalizations`, ymin=`Lower Bound Hospitalizations`, ymax=`Upper Bound Hospitalizations`)) +
-            geom_line(linetype = "dashed", size = 0.75) +
-            geom_ribbon(alpha=0.3, fill = "cadetblue2") +
-            # geom_hline(yintercept = TotalBedsCounty * 0.5,
-            #            linetype = "solid",
-            #            color = "red") +
-            labs(title = paste("IHME Projected Daily Hospitalizations"),
-                 x = "Date", y = "Daily Hospitalizations") +
-            theme_bw() +
-            theme(plot.title = element_text(face = "bold", size = 15, family = "sans"),
-                  axis.title = element_text(face = "bold", size = 11, family = "sans"),
-                  axis.text.x = element_text(angle = 60, hjust = 1),
-                  axis.line = element_line(color = "black"),
-                  legend.position = "top",
-                  plot.background = element_blank(),
-                  panel.grid.major = element_blank(),
-                  panel.grid.minor = element_blank(),
-                  panel.border = element_blank()) +
-            scale_x_date(date_breaks = "2 week")
-
-        ggplotly(r1)
     })
     
     
     #Output the SEIAR CHIME projections with a max, min, and expected value
     output$SEIARProjection<-renderPlotly({
         BaseState<-dplyr::filter(AFBaseLocations, Base == input$Base)
+
         IncludedCounties<-GetCounties(input$Base,input$Radius)
-        CHIMELocalPlot(input$social_dist, input$proj_days, IncludedCounties)
+        CHIMELocalPlot(input$social_dist, input$proj_days, IncludedCounties, input$StatisticType)
+
     })
     
     output$CHIMENationalProj<-renderPlotly({
@@ -332,9 +278,11 @@ server <- function(input, output) {
     
     #Overlay Projected Plots
     output$OverlayPlots<-renderPlotly({
+
         MyCounties<-GetCounties(input$Base,input$Radius)
         MyHospitals<-GetHospitals(input$Base,input$Radius)
-        PlotOverlay(input$Base, MyCounties, MyHospitals, input$social_dist, input$proj_days)
+        PlotOverlay(input$Base, MyCounties, MyHospitals, input$social_dist, input$proj_days, input$StatisticType)
+
     })
     
     
