@@ -2182,6 +2182,16 @@ CHIMELocalPlot<-function(SocialDistance, ForecastedDays, IncludedCounties, Stati
         PlottingData<-rbind(HistoricalData, DailyData)
         
         
+        hospCounty <- subset(HospUtlzCounty, fips %in% IncludedCounties$FIPS)
+        #Finds number of hospitals in radius
+        TotalBeds<-sum(hospCounty$num_staffed_beds)
+        #get historic utilization
+        hospCounty$bedsUsed <- hospCounty$bed_utilization * hospCounty$num_staffed_beds
+        totalUsedBeds <- sum(hospCounty$bedsUsed)
+        baseUtlz <- totalUsedBeds/TotalBeds
+        
+        
+        
         #Plot for local area cumulative cases
         projections <- ggplot(data = PlottingData, 
                               aes(x=ForecastDate,
@@ -2191,6 +2201,9 @@ CHIMELocalPlot<-function(SocialDistance, ForecastedDays, IncludedCounties, Stati
             #geom_line(aes(x=ForecastDate, y=DailyData$`Expected Daily Cases`, ymin = DailyData$`Minimum Daily Cases` , ymax = DailyData$`Maximum Daily Cases`)) +
             geom_line(linetype = "dashed", size = 0.75) +
             geom_ribbon(alpha=0.3, fill = "tan4") +
+            geom_hline(yintercept = TotalBeds * (1-baseUtlz),
+                       linetype = "solid",
+                       color = "red") +
             #scale_colour_manual(values=c("Blue", "Orange", "Red"))+
             xlab('Date') +
             ylab('Daily Hospitalizations') +
@@ -2400,7 +2413,14 @@ IHMELocalProjections<-function(MyCounties, IncludedHospitals, ChosenBase, Statis
         #Creating the stats and dataframes determined by the base we choose to look at.
         BaseState<-dplyr::filter(AFBaseLocations, Base == ChosenBase)
         IHME_State <- dplyr::filter(IHME_Model, State == toString(BaseState$State[1]))
-        TotalBedsCounty <- sum(IncludedHospitals$BEDS)
+        hospCounty <- subset(HospUtlzCounty, fips %in% MyCounties$FIPS)
+        #Finds number of hospitals in radius
+        TotalBeds<-sum(hospCounty$num_staffed_beds)
+        #get historic utilization
+        hospCounty$bedsUsed <- hospCounty$bed_utilization * hospCounty$num_staffed_beds
+        totalUsedBeds <- sum(hospCounty$bedsUsed)
+        baseUtlz <- totalUsedBeds/TotalBeds
+        TT <- sum(IncludedHospitals$BEDS)
         
         #Get regional and state populations
         CovidCounties<-subset(CovidConfirmedCases, CountyFIPS %in% MyCounties$FIPS)
@@ -2417,13 +2437,6 @@ IHMELocalProjections<-function(MyCounties, IncludedHospitals, ChosenBase, Statis
         # Use Population ratio to scale IHME
         PopRatio <- RegPop/StPop
         
-        # Get total hospital bed number across state
-        IncludedHospitalsST <- dplyr::filter(HospitalInfo, STATE == toString(BaseState$State[1]))
-        TotalBedsState <- sum(IncludedHospitalsST$BEDS)
-        
-        # Calculate bed ratio
-        BedProp <- TotalBedsCounty/TotalBedsState
-        
         # Apply ratio's to IHME data
         IHME_Region <- IHME_State
         IHME_Region$allbed_mean = round(IHME_State$allbed_mean*PopRatio)
@@ -2439,9 +2452,9 @@ IHMELocalProjections<-function(MyCounties, IncludedHospitals, ChosenBase, Statis
         r1 <- ggplot(data=IHME_Region, aes(x=ForecastDate, y=`Expected Hospitalizations`, ymin=`Lower Bound Hospitalizations`, ymax=`Upper Bound Hospitalizations`)) +
             geom_line(linetype = "dashed", size = 0.75) +
             geom_ribbon(alpha=0.3, fill = "cadetblue2") +
-            # geom_hline(yintercept = TotalBedsCounty * 0.5,
-            #            linetype = "solid",
-            #            color = "red") +
+            geom_hline(yintercept = TotalBeds * (1-baseUtlz),
+                       linetype = "solid",
+                       color = "red") +
             labs(title = paste("IHME Projected Daily Hospitalizations"),
                  x = "Date", y = "Daily Hospitalizations") +
             theme_bw() +
