@@ -70,7 +70,7 @@ ui <- tagList(
                                            tabName = "dashboard",
                                            icon = icon("sliders-h"),
                                            div(id = "single", style="display: none;", numericInput("tckt", "Ticket Number : ", 12345,  width = 300)),
-                                           radioButtons("StatisticType", "State or County Plot:",
+                                           radioButtons("StatisticType", "Choose projected statistic:",
                                                         c("Hospitalizations"="Hospitalizations",
                                                           "Fatalities"="Fatalities")),
                                            sliderInput("proj_days",
