@@ -44,7 +44,7 @@ dashboard for their AF installation.*
 
 *Consists of additional user input options that can be used to further
 customize dashboard assessments and projections.*
-1. **Hospitalizations or Fatalities**: Choose to view projections for 
+1. **Choose Projected Statistic**: Choose to view projections for 
     daily hospitalizations or cumulative deaths
 
 2.  **Projection Days**: How many days into the future the dashboard
