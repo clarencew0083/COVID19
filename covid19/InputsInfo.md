@@ -44,11 +44,13 @@ dashboard for their AF installation.*
 
 *Consists of additional user input options that can be used to further
 customize dashboard assessments and projections.*
+1. **Hospitalizations or Fatalities**: Choose to view projections for 
+    daily hospitalizations or cumulative deaths
 
-1.  **Projection Days**: How many days into the future the dashboard
+2.  **Projection Days**: How many days into the future the dashboard
     displays predictive model projections.
 
-2.  **Percent Social Distancing Reduction**: How much reduction in
+3.  **Percent Social Distancing Reduction**: How much reduction in
     transmission is realized from social distancing measures. Studies
     show the maximum reduction without eliminating essential
     interactions is 30%. Ranges from 0 - 40% with a default of 10%. See
