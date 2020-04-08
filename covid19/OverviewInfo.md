@@ -35,3 +35,6 @@ information displayed updates live with changes in user inputs.
 **Download a comprehensive report** of the information diplayed on the
 dashboard by clicking the *Generate Report* button at the bottom of the
 left sidebar.
+
+### Supporting Agencies
+Various agencies were involved to launch CHAD. The design and development of CHAD was sponsored by the Air Force Institute of Technology (AFIT), who was critical in ensuring appropriate contacts and collaborations were successful. Special thanks to AF/A9 for support in molding, distributing, and  establishing key connections to move the product to senior leaders. Additional collaboration was conducted with LTC Faber and his team at Army Futures Command in developing model projections.
