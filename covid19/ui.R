@@ -70,6 +70,9 @@ ui <- tagList(
                                            tabName = "dashboard",
                                            icon = icon("sliders-h"),
                                            div(id = "single", style="display: none;", numericInput("tckt", "Ticket Number : ", 12345,  width = 300)),
+                                           radioButtons("StatisticType", "State or County Plot:",
+                                                        c("Hospitalizations"="Hospitalizations",
+                                                          "Fatalities"="Fatalities")),
                                            sliderInput("proj_days",
                                                        "Projection days:",
                                                        min = 14,
@@ -183,9 +186,9 @@ ui <- tagList(
                                           valueBoxOutput("TotalPopulation"),
                                           valueBoxOutput("IHMEPeakDate"),
                                           valueBoxOutput("CHIMEPeakDate"),
-                                          # valueBoxOutput("TotalPopulation"),
-                                          # valueBoxOutput("IHMEMinMax"),
-                                          # valueBoxOutput("CHIMEMinMax")
+                                          #valueBoxOutput("TotalPopulation"),
+                                          #valueBoxOutput("IHMEMinMax"),
+                                          #valueBoxOutput("CHIMEMinMax")
                                           
                                       ),
                                       fluidRow(
