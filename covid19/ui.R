@@ -70,6 +70,9 @@ ui <- tagList(
                                            tabName = "dashboard",
                                            icon = icon("sliders-h"),
                                            div(id = "single", style="display: none;", numericInput("tckt", "Ticket Number : ", 12345,  width = 300)),
+                                           radioButtons("StatisticType", "Choose projected statistic:",
+                                                        c("Hospitalizations"="Hospitalizations",
+                                                          "Fatalities"="Fatalities")),
                                            sliderInput("proj_days",
                                                        "Projection days:",
                                                        min = 14,
@@ -99,19 +102,15 @@ ui <- tagList(
                                                        value = 15)
                                        ),
                                        br(),
-                                       #actionButton("refresh", "Refresh", width = "90%"),
-<<<<<<< HEAD
-                                       div(style="text-align:center", hr(), "Generate Report"),
+
+                                       div(style="text-align:center", tags$hr(style="border-color: #444;"), "Generate & Download Report:"),
                                        br(),
                                        fluidRow(
-                                           downloadButton("report", "Download", class = "butt"),
-                                           tags$head(tags$style(".butt{background-color:#add8e6;} .butt{color: white;}")),
+                                           downloadButton("report", "Generate Report", class = "butt"),
+                                           tags$style(".skin-black .sidebar .butt{background-color:#15824d;color: white;border-color:white;}"),
                                            align = "center"
                                        )
-=======
-                                       hr()
-                                       # downloadButton("report", "Generate report")
->>>>>>> a50ba34189e469af8fa5344fb895ed20bf76e82c
+
                                        # fluidRow(
                                        #     valueBox("LOW RISK", subtitle ="Mission Risk **notional ex.**",color= "green",width = 12)
                                        # ),
@@ -193,9 +192,9 @@ ui <- tagList(
                                           valueBoxOutput("TotalPopulation"),
                                           valueBoxOutput("IHMEPeakDate"),
                                           valueBoxOutput("CHIMEPeakDate"),
-                                          # valueBoxOutput("TotalPopulation"),
-                                          # valueBoxOutput("IHMEMinMax"),
-                                          # valueBoxOutput("CHIMEMinMax")
+                                          #valueBoxOutput("TotalPopulation"),
+                                          #valueBoxOutput("IHMEMinMax"),
+                                          #valueBoxOutput("CHIMEMinMax")
                                           
                                       ),
                                       fluidRow(
