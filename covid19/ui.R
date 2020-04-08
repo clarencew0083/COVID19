@@ -20,7 +20,7 @@
 #Build UI
 #Establishes the layout of the overall dashboard and how items are displayed
 ui <- tagList(
-    dashboardPage(skin = "black",
+    dashboardPage(skin = "black",title="COVID-19 Health Assessment Dashboard",
                   
                   # Step One - Header
                   ###################################################################################################################################################
@@ -143,7 +143,7 @@ ui <- tagList(
                     '))),
                       tags$script(HTML('
                                    $(document).ready(function() {
-                                   $("header").find("nav").append(\'<span class="myClass"> COVID-19 Health Assessment Dashboard v2.0</span>\');
+                                   $("header").find("nav").append(\'<span class="myClass"> COVID-19 Health Assessment Dashboard v2.1</span>\');
                                    })
                                    ')),
                       
