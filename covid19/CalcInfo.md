@@ -15,28 +15,28 @@ the assumptions made regarding the data*
     between the base and the hospital similar to local counties.
     Hospitals are included based on their mileage distance to the
     installation of interest. Furthermore, hospitals are filtered to
-    only inlcude “General Care” and “Acute Care” as these are the
+    only inlcude “General Acute Care” and “Critical Access” as these are the
     primary types of hospitals to supply beds and ventilators to
     Covid-19 patients.
 
 **Case Statistics**:
 
 1.  **Confirmed Cases**: Confirmed COVID-19 cases and deaths are
-    reported daily and summed by state state and local region, which is
+    reported daily and summed by state and local region, which is
     determined by the user.
 
 2.  **Hospitalization Utilzation**: Hospitalization rates are a function
     of the total number of hospital beds in a county and the number of
     locally confirmed cases. The percentage of hospitalized patients
     totals the number of confirmed cases in the past 7 days (average
-    length of hospital stay) and multiplies that number of cases by a
-    percentage (15%) provided by the Center for Disease Control
-    estimating the percentage of patients requiring a hospital stay.
-    This number is then added to the national average hospital capacity.
+    length of hospital stay) and multiplied by the Center for Disease 
+    Control's (CDC) planning factors for hospitalization rates. This number
+    is then added to the average historical hospital bed capacity for the region
+    currently being examined.
 
 3.  **Percentage Change in Hospitalization Utilization**: The change in
     hospitalization rates is calculated by the the difference in new
-    cases and the confirmed cases 8 days prior. With that difference,
+    cases and the confirmed cases 7 days prior. With that difference,
     the change is then divided by the total number of hospital beds in
     the local area to calculate a percentage change in the local area.
 
@@ -45,7 +45,8 @@ the assumptions made regarding the data*
 **IHME**: Developed by the University of Washington’s Institute for
 Health Metrics and Evaluation, this model uses data from state and
 national governments, hospital groups, and the World Health Organization
-to predict hospitalizations and ICU rates for planning purposes.
+to predict hospitalizations and ICU rates for planning purposes. Their model can be found at
+<a href="https://covid19.healthdata.org/united-states-of-america" class="uri">https://covid19.healthdata.org/united-states-of-america
 
 **SEIAR**: This predictive model was pulled from the Army’s ACME Tool
 developed through collaborative efforts from Army Futures Command and
