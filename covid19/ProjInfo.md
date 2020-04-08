@@ -23,7 +23,7 @@ offers a quick comparison of the two models.
 <td style="text-align: center;">Modeling Approach</td>
 <td style="text-align: center;">Data-driven, Statistical</td>
 <td style="text-align: center;">SIR-based, deterministic</td>
-</tr>
+</hr>
 <tr class="odd">
 <td style="text-align: center;">Strengths</td>
 <td style="text-align: center;">DoD Supported, ICU Capacity</td>
