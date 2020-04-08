@@ -31,7 +31,7 @@ offers a quick comparison of the two models.
 </tr>
 <tr class="even">
 <td style="text-align: center;">Limitations</td>
-<td style="text-align: center;">Relies on initial (possibly unreliable) data</td>
+<td style="text-align: center;">Relies on initial data</td>
 <td style="text-align: center;">Lacks seasonal factors, deterministic</td>
 </tr>
 <tr class="odd">
