@@ -219,15 +219,23 @@ ui <- tagList(
                                           box(plotlyOutput("IHMENationaProj",height = 400)),
                                           box(plotlyOutput("CHIMENationalProj"),height = 400)),
                                       box(plotlyOutput("NationalPlotOverlay"), width =  900)
-                                  )
+                                  ),
                                   ####### END PROJECTION TAB #######
                                   
-                                  ####### BEGIN MISSION RISK TAB #########
+                                  ####### BEGIN SUMMARY TAB #########
                                   # Mission Risk ------------------------------------------------------------
-                                  # tabPanel(
-                                  #     title = "Mission Risk",
-                                  #     "Hello World")
-                                  # 
+                                  tabPanel(
+                                      title = "Summary",
+                                      box(title = "Projected Daily Hospitalizations",
+                                          solidHeader=T, 
+                                          align = "left", 
+                                          column(width = 12, 
+                                                 DT::dataTableOutput("ForecastDataTable"), 
+                                                 style = "height:720px;overflow-y: scroll"), 
+                                          height = 900, 
+                                          width =13)
+                                      )
+
                                   ####### END Mission Risk #######
                                   
                                   

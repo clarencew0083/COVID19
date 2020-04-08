@@ -309,6 +309,12 @@ server <- function(input, output) {
     })
     
     
+    output$ForecastDataTable<-DT::renderDataTable({
+        dt<-DT::datatable(ForecastDataTable, rownames = FALSE, options = list(dom = 't',ordering = F, "pageLength"=200))
+        dt
+    })
+    
+    
     
     # Output Report ------------------------------------------------------------------------------------------------------------------------------------------------------------------
     

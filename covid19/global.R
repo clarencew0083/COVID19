@@ -175,6 +175,91 @@ NationalDataTable$`Cases Per 100,000 People`<-round(NationalDataTable$`Total Cas
 
 
 
+# Output Projections  ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+AFrow = nrow(AFBaseLocations)
+ForecastDataTable <- setNames(data.frame(matrix(ncol = 6, nrow = 0)), c("Installation","State","7 Day Forecast","14 Day Forecast","30 Day Forecast","60 Day Forecast"))
+for (i in 1:AFrow){
+  #Create a datatable with just the forecasted values for every installation
+  #Creating the stats and dataframes determined by the base we choose to look at.
+  #IHME_Model is the initial import data table from global.R
+  #BaseState<-AFBaseLocations$State[i]   #dplyr::filter(AFBaseLocations, Base == baseinput)
+  #IncludedHospitals<-GetHospitals()        
+  #GetHospitals
+  HospitalInfo$DistanceMiles = himd[,as.character(AFBaseLocations$Base[i])]
+  IncludedHospitals<-dplyr::filter(HospitalInfo, (DistanceMiles <= 50))
+  IncludedHospitals<-dplyr::filter(IncludedHospitals, (TYPE=="GENERAL ACUTE CARE") | (TYPE=="CRITICAL ACCESS"))
+  
+  IHME_State <- dplyr::filter(IHME_Model, State == AFBaseLocations$State[i])
+  TotalBedsCounty <- sum(IncludedHospitals$BEDS)
+  
+  #Get regional and state populations
+  #MyCounties <- GetCounties()
+  #GetCounties
+  CountyInfo$DistanceMiles = cimd[,as.character(AFBaseLocations$Base[i])]
+  MyCounties<-dplyr::filter(CountyInfo, DistanceMiles <= 50)
+  CovidCounties<-subset(CovidConfirmedCases, CountyFIPS %in% MyCounties$FIPS)
+  HistoricalData<-colSums(CovidCounties[,5:length(CovidCounties)])
+  HistoricalDates<-seq(as.Date("2020-01-22"), length=length(HistoricalData), by="1 day")
+  HistoricalData<-data.frame(HistoricalDates, HistoricalData*.21) #, HistoricalData*.15, HistoricalData*.27)
+  colnames(HistoricalData)<-c("ForecastDate", "Expected Hospitalizations") #, "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
+  
+  StPopList <- dplyr::filter(CountyInfo, State == AFBaseLocations$State[i])
+  RegPop <- sum(MyCounties$Population)
+  StPop <- sum(StPopList$Population)
+  
+  # Use Population ratio to scale IHME
+  PopRatio <- RegPop/StPop
+  
+  # Get total hospital bed number across state
+  IncludedHospitalsST <- dplyr::filter(HospitalInfo, STATE == AFBaseLocations$State[i])
+  TotalBedsState <- sum(IncludedHospitalsST$BEDS)
+  
+  # Calculate bed ratio
+  BedProp <- TotalBedsCounty/TotalBedsState
+  
+  # Apply ratio's to IHME data
+  IHME_Region <- IHME_State
+  IHME_Region$allbed_mean = round(IHME_State$allbed_mean*PopRatio)
+  #IHME_Region$allbed_lower = round(IHME_State$allbed_lower*PopRatio)
+  #IHME_Region$allbed_upper = round(IHME_State$allbed_upper*PopRatio)
+  IHME_Region<-data.frame(IHME_Region$date, IHME_Region$allbed_mean) #, IHME_Region$allbed_lower, IHME_Region$allbed_upper)
+  colnames(IHME_Region)<-c("ForecastDate", "Expected Hospitalizations") #, "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
+  IHME_Region<- dplyr::filter(IHME_Region, ForecastDate >= Sys.Date())
+  
+  IHME_Region$ForecastDate<-as.Date(IHME_Region$ForecastDate)
+  IHME_Region <- dplyr::arrange(IHME_Region,ForecastDate)
+  
+  if(nrow(IHME_Region) == 0){
+    NewDF <- data.frame(AFBaseLocations$Base[i],AFBaseLocations$State[i],0,0,0,0)
+    names(NewDF) <- c("Installation","State","7 Day Forecast","14 Day Forecast","30 Day Forecast","60 Day Forecast")  
+    ForecastDataTable <- rbind(ForecastDataTable,NewDF)        
+  }else{
+    IHME_Region<-rbind(HistoricalData,IHME_Region)
+    IHME_Region$ForecastDate<-as.Date(IHME_Region$ForecastDate)
+    #IHME_Region[order(IHME_Region$ForecastDate),]
+    IHME_Region <- dplyr::arrange(IHME_Region,ForecastDate)
+    current7 = match(Sys.Date(),IHME_Region$ForecastDate)+7
+    current14 = match(Sys.Date(),IHME_Region$ForecastDate)+14
+    current30 = match(Sys.Date(),IHME_Region$ForecastDate)+30
+    current60 = match(Sys.Date(),IHME_Region$ForecastDate)+60            
+    F1 = round(sum(IHME_Region[1:current7,2]))
+    F2 = round(sum(IHME_Region[1:current14,2]))
+    F3 = round(sum(IHME_Region[1:current30,2]))
+    F4 = round(sum(IHME_Region[1:current60,2]))            
+    NewDF <- data.frame(AFBaseLocations$Base[i],AFBaseLocations$State[i],F1,F2,F3,F4)  
+    names(NewDF) <- c("Installation","State","7 Day Forecast","14 Day Forecast","30 Day Forecast","60 Day Forecast")  
+    ForecastDataTable <- rbind(ForecastDataTable,NewDF)             
+  }
+} 
+
+
+
+
+
+
+
+
+
 GetCounties<-function(base,radius){
     #BaseStats<-dplyr::filter(AFBaseLocations, Base == input$Base)
     
@@ -1087,9 +1172,9 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
             scale_fill_manual(values = c("tan4", "cadetblue", "gray"))+
             geom_ribbon(aes(ymin = `Lower Bound Hospitalizations`, ymax = `Upper Bound Hospitalizations`), 
                         alpha = .2) +
-            geom_hline(yintercept = TotalBeds * (1-baseUtlz),
-                       linetype = "solid",
-                       color = "red") +
+            geom_hline(aes(yintercept = TotalBeds * (1-baseUtlz),
+                           linetype = "Max Hospital Bed Capacity"),
+                           colour = "red") +
             ggtitle("Projected Hospitalizations")+
             ylab("Daily Hospitalizations")+
             theme_bw() + 
