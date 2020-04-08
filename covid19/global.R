@@ -1168,9 +1168,9 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
         
         projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID, linetype = ID)) +
             geom_line() + 
-            scale_colour_manual(values=c("tan", "blue", "black"))+
-            scale_fill_manual(values = c("tan4", "cadetblue", "gray"))+
-            scale_linetype_manual(values=c("dashed", "dashed", "solid"))+
+            scale_colour_manual(values=c("tan", "blue", "black" ,"red"))+
+            scale_fill_manual(values = c("tan4", "cadetblue", "gray", "red"))+
+            scale_linetype_manual(values=c("dashed", "dashed", "solid", "solid"))+
             geom_ribbon(aes(ymin = `Lower Bound Hospitalizations`, ymax = `Upper Bound Hospitalizations`), 
                         alpha = .2) +
             geom_hline(aes(yintercept = TotalBeds * (1-baseUtlz),
