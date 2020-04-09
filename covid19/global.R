@@ -72,8 +72,7 @@ HospUtlzCounty <- read.csv("https://github.com/treypujats/COVID19/raw/master/cov
 #Updated data frames to read in
 githubURL <- "https://github.com/treypujats/COVID19/blob/master/himd.RData?raw=true"
 load(url(githubURL))
-himd<-himdtest
-rm(himdtest)
+
 
 githubURL <- "https://github.com/treypujats/COVID19/blob/master/cimd.RData?raw=true"
 load(url(githubURL))
