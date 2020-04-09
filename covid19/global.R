@@ -60,14 +60,33 @@ library(plotly)
 #CountyInfo is used to measure population of a county and coordinates.
 
 CovidConfirmedCases <- as.data.frame(data.table::fread("https://usafactsstatic.blob.core.windows.net/public/data/covid-19/covid_confirmed_usafacts.csv"))
-AFBaseLocations <- as.data.frame(data.table::fread("https://github.com/treypujats/COVID19/raw/master/covid19/data/baseinfo.rda"))
+#AFBaseLocations <- as.data.frame(data.table::fread("https://github.com/treypujats/COVID19/raw/master/covid19/data/baseinfo.rda"))
 CountyInfo <- as.data.frame(data.table::fread("https://github.com/treypujats/COVID19/raw/master/covid19/data/countyinfo.rda"))
 HospitalInfo <- as.data.frame(data.table::fread("https://github.com/treypujats/COVID19/blob/master/covid19/data/hospitalinfo.rda?raw=true"))
 CovidDeaths<-as.data.frame(data.table::fread("https://usafactsstatic.blob.core.windows.net/public/data/covid-19/covid_deaths_usafacts.csv"))
-himd <- as.data.frame(data.table::fread("https://github.com/treypujats/COVID19/blob/master/covid19/data/himd.rda?raw=true"))
-cimd <- as.data.frame(data.table::fread("https://github.com/treypujats/COVID19/blob/master/covid19/data/cimd.rda?raw=true"))
+#himd <- as.data.frame(data.table::fread("https://github.com/treypujats/COVID19/blob/master/covid19/data/himd.rda?raw=true"))
+#cimd <- as.data.frame(data.table::fread("https://github.com/treypujats/COVID19/blob/master/covid19/data/cimd.rda?raw=true"))
 HospUtlzCounty <- read.csv("https://github.com/treypujats/COVID19/raw/master/covid19/data/county_hospitals.csv")
 #AFBaseLocations[154,]<-c("Pentagon", "DC", "HQ", "Something", "AF", 38.8719, -77.0563 )
+
+#Updated data frames to read in
+githubURL <- "https://github.com/treypujats/COVID19/blob/master/himd.RData?raw=true"
+load(url(githubURL))
+himd<-himdtest
+rm(himdtest)
+
+githubURL <- "https://github.com/treypujats/COVID19/blob/master/cimd.RData?raw=true"
+load(url(githubURL))
+cimd<-cimdtest
+rm(cimdtest)
+
+githubURL <- "https://github.com/treypujats/COVID19/blob/master/baseinfo.RData?raw=true"
+load(url(githubURL))
+
+
+
+
+
 
 #Updating data frames to ensure they are filled and match the data we reference later in the scripts
 colnames(CovidConfirmedCases)[1]<-"CountyFIPS"
