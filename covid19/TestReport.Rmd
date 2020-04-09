@@ -1,0 +1,151 @@
+---
+title: <center> CHAD Output Summary </center>
+  <center> `r format(Sys.time(), '%d %B, %Y')` </center>
+author: 
+date:
+output: html_document
+params:
+    radius: NA
+    base: NA
+    pjDays: NA
+    socDis: NA
+
+---
+
+
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo = FALSE, warning = FALSE, message = FALSE}
+# Some global stuff
+library(ggplot2)
+library(plotly)
+library(knitr)
+library(kableExtra)
+
+Counties = GetCounties(params$base, params$radius)
+Hospitals = GetHospitals(params$base, params$radius)
+CountyDT = GetLocalDataTable(Counties)
+CovidCounties = subset(CovidConfirmedCases, CountyFIPS %in% Counties$FIPS)
+CountyCovid = CalculateCovid(Counties)
+CountyDeaths = CalculateDeaths(Counties)
+TotPop = CalculateCounties(Counties)
+CovidCaseChng = sum(rev(CovidCounties)[,1] - rev(CovidCounties)[,2])
+CovidDeathChng <- sum(rev(CovidCounties)[,1] - rev(CovidCounties)[,2])
+HospUltz = HospitalIncreases(Counties, Hospitals)
+```
+---
+
+
+
+
+
+<center>
+#  Base: `r params$base` 
+</center>
+
+The Air Force COVID-19 Health Assessment Dashboard (CHAD) was developed to provide a centralized location for leadership to receive up-to-date pandemic information specifically tailored to their installation and the surrounding local area. 
+
+This report was generated using a **`r params$radius` mile radius** around **`r params$base`** as the defined local area.
+
+
+
+
+## Current Local Area Info
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+<div class = "row">
+
+<div class = "col-md-4">
+
+- Local Population: `r TotPop`
+
+- Total Local Cases: `r comma(CalculateCovid(Counties))`
+
+- New Local Cases: `r paste("+",toString(CovidCaseChng))`
+
+- Total Local Fatalities: `r comma(CalculateDeaths(Counties))`
+
+- New Local Fatalities: `r paste("+",toString(CovidDeathChng))`
+
+- Local Hospital Bed Utilization: `r HospUltz`
+
+- Local Hospital Bed Utilization Change: 
+
+</div>
+
+<div class = "col-md-8">
+
+```{r fig.height = 4, fig.width = 5, echo=FALSE}
+CountyChoro = PlotLocalChoro(Counties, base, "County")
+CountyChoro
+```
+
+</div>
+</div>
+
+## Local Area Plots
+
+<br>
+
+### Daily Stats
+
+The charts below display the 
+
+<div class = "row">
+
+<div class = "col-md-6">
+```{r fig.height = 4, fig.width = 4, echo=FALSE}
+CCDaily = CovidCasesPerDayChart(base, radius, Counties, Hospitals)
+CCDaily = CCDaily %>% layout(xaxis = list(showgrid = T),
+                             yaxis = list(showgrid = T))
+CCDaily
+```
+</div>
+
+<div class = "col-md-6">
+```{r fig.height = 4, fig.width = 4, echo=FALSE}
+CCtot = CovidCasesCumChart(base, radius, Counties, Hospitals)
+CCtot = CCtot %>% layout(xaxis = list(showgrid = T),
+                         yaxis = list(showgrid = T))
+CCtot
+```
+</div>
+
+</div>
+
+
+
+### Detailed County Info
+
+The table displays information for each county in `r params$radius` of `r params$base`.
+
+
+```{r echo=FALSE}
+kable(CountyDT) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+
+
+### Local Projections
+
+This section will display the projections from the IHME model and CHIME inspired model
+
+#### Overlay
+
+```{r fig.height = 5, fig.width = 10,echo=FALSE}
+overlay = PlotOverlay(params$base, Counties, Hospitals, params$socDis, params$pjDays)
+overlay
+```
+
+
+
+
+
