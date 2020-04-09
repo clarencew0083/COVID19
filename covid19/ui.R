@@ -104,6 +104,7 @@ ui <- tagList(
                                                        value = 15)
                                        ),
                                        br()
+                                       
 
                                        # div(style="text-align:center", tags$hr(style="border-color: #444;"), "Generate & Download Report:"),
                                        # br(),
@@ -233,7 +234,8 @@ ui <- tagList(
                                                  DT::dataTableOutput("ForecastDataTable"), 
                                                  style = "height:720px;overflow-y: scroll"), 
                                           height = 900, 
-                                          width =13)
+                                          width =13,
+                                          downloadButton('downloadData', 'Download data'))
                                       )
 
                                   ####### END Mission Risk #######

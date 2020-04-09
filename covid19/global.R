@@ -195,80 +195,211 @@ NationalDataTable$`Cases Per 100,000 People`<-round(NationalDataTable$`Total Cas
 
 # Output Projections  ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 AFrow = nrow(AFBaseLocations)
-ForecastDataTable <- setNames(data.frame(matrix(ncol = 6, nrow = 0)), c("Installation","State","7 Day Forecast","14 Day Forecast","30 Day Forecast","60 Day Forecast"))
+ForecastDataTable <- setNames(data.frame(matrix(ncol = 19, nrow = 0)), c("Installation","State","Total Beds","7D IMHE Forecast","7D Peak","7D SEIAR Forecast","7D Peak",
+                                                                         "14D IMHE Forecast","14D Peak","14D SEIAR Forecast","14D Peak","30D IMHE Forecast","30D Peak","30D SEIAR Forecast","30D Peak",
+                                                                         "60D IMHE Forecast","60D Peak","60D SEIAR Forecast","60D Peak"))
 for (i in 1:AFrow){
-  #Create a datatable with just the forecasted values for every installation
-  #Creating the stats and dataframes determined by the base we choose to look at.
-  #IHME_Model is the initial import data table from global.R
-  #BaseState<-AFBaseLocations$State[i]   #dplyr::filter(AFBaseLocations, Base == baseinput)
-  #IncludedHospitals<-GetHospitals()        
-  #GetHospitals
-  HospitalInfo$DistanceMiles = himd[,as.character(AFBaseLocations$Base[i])]
-  IncludedHospitals<-dplyr::filter(HospitalInfo, (DistanceMiles <= 50))
-  IncludedHospitals<-dplyr::filter(IncludedHospitals, (TYPE=="GENERAL ACUTE CARE") | (TYPE=="CRITICAL ACCESS"))
-  
-  IHME_State <- dplyr::filter(IHME_Model, State == AFBaseLocations$State[i])
-  TotalBedsCounty <- sum(IncludedHospitals$BEDS)
-  
-  #Get regional and state populations
-  #MyCounties <- GetCounties()
-  #GetCounties
-  CountyInfo$DistanceMiles = cimd[,as.character(AFBaseLocations$Base[i])]
-  MyCounties<-dplyr::filter(CountyInfo, DistanceMiles <= 50)
-  CovidCounties<-subset(CovidConfirmedCases, CountyFIPS %in% MyCounties$FIPS)
-  HistoricalData<-colSums(CovidCounties[,5:length(CovidCounties)])
-  HistoricalDates<-seq(as.Date("2020-01-22"), length=length(HistoricalData), by="1 day")
-  HistoricalData<-data.frame(HistoricalDates, HistoricalData*.21) #, HistoricalData*.15, HistoricalData*.27)
-  colnames(HistoricalData)<-c("ForecastDate", "Expected Hospitalizations") #, "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
-  
-  StPopList <- dplyr::filter(CountyInfo, State == AFBaseLocations$State[i])
-  RegPop <- sum(MyCounties$Population)
-  StPop <- sum(StPopList$Population)
-  
-  # Use Population ratio to scale IHME
-  PopRatio <- RegPop/StPop
-  
-  # Get total hospital bed number across state
-  IncludedHospitalsST <- dplyr::filter(HospitalInfo, STATE == AFBaseLocations$State[i])
-  TotalBedsState <- sum(IncludedHospitalsST$BEDS)
-  
-  # Calculate bed ratio
-  BedProp <- TotalBedsCounty/TotalBedsState
-  
-  # Apply ratio's to IHME data
-  IHME_Region <- IHME_State
-  IHME_Region$allbed_mean = round(IHME_State$allbed_mean*PopRatio)
-  #IHME_Region$allbed_lower = round(IHME_State$allbed_lower*PopRatio)
-  #IHME_Region$allbed_upper = round(IHME_State$allbed_upper*PopRatio)
-  IHME_Region<-data.frame(IHME_Region$date, IHME_Region$allbed_mean) #, IHME_Region$allbed_lower, IHME_Region$allbed_upper)
-  colnames(IHME_Region)<-c("ForecastDate", "Expected Hospitalizations") #, "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
-  IHME_Region<- dplyr::filter(IHME_Region, ForecastDate >= Sys.Date())
-  
-  IHME_Region$ForecastDate<-as.Date(IHME_Region$ForecastDate)
-  IHME_Region <- dplyr::arrange(IHME_Region,ForecastDate)
-  
-  if(nrow(IHME_Region) == 0){
-    NewDF <- data.frame(AFBaseLocations$Base[i],AFBaseLocations$State[i],0,0,0,0)
-    names(NewDF) <- c("Installation","State","7 Day Forecast","14 Day Forecast","30 Day Forecast","60 Day Forecast")  
-    ForecastDataTable <- rbind(ForecastDataTable,NewDF)        
-  }else{
-    IHME_Region<-rbind(HistoricalData,IHME_Region)
+    #Create a datatable with just the forecasted values for every installation
+    #Creating the stats and dataframes determined by the base we choose to look at.
+    #IHME_Model is the initial import data table from global.R
+    #BaseState<-AFBaseLocations$State[i]   #dplyr::filter(AFBaseLocations, Base == baseinput)
+    #IncludedHospitals<-GetHospitals()        
+    #GetHospitals
+    HospitalInfo$DistanceMiles = himd[,as.character(AFBaseLocations$Base[i])]
+    MyHospitals<-dplyr::filter(HospitalInfo, (DistanceMiles <= 50))
+    MyHospitals<-dplyr::filter(MyHospitals, (TYPE=="GENERAL ACUTE CARE") | (TYPE=="CRITICAL ACCESS"))
+    
+    IHME_State <- dplyr::filter(IHME_Model, State == AFBaseLocations$State[i])
+    TotalBedsCounty <- sum(MyHospitals$BEDS)
+    
+    #Get regional and state populations
+    #MyCounties <- GetCounties()
+    #GetCounties
+    CountyInfo$DistanceMiles = cimd[,as.character(AFBaseLocations$Base[i])]
+    MyCounties<-dplyr::filter(CountyInfo, DistanceMiles <= 50)
+    CovidCounties<-subset(CovidConfirmedCases, CountyFIPS %in% MyCounties$FIPS)
+    HistoricalData<-colSums(CovidCounties[,5:length(CovidCounties)])
+    HistoricalDates<-seq(as.Date("2020-01-22"), length=length(HistoricalData), by="1 day")
+    HistoricalData<-data.frame(HistoricalDates, HistoricalData*.21) #, HistoricalData*.15, HistoricalData*.27)
+    colnames(HistoricalData)<-c("ForecastDate", "Expected Hospitalizations") #, "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
+    
+    StPopList <- dplyr::filter(CountyInfo, State == AFBaseLocations$State[i])
+    RegPop <- sum(MyCounties$Population)
+    StPop <- sum(StPopList$Population)
+    
+    # Use Population ratio to scale IHME
+    PopRatio <- RegPop/StPop
+    
+    # Get total hospital bed number across state
+    IncludedHospitalsST <- dplyr::filter(HospitalInfo, STATE == AFBaseLocations$State[i])
+    TotalBedsState <- sum(IncludedHospitalsST$BEDS)
+    
+    # Calculate bed ratio
+    BedProp <- TotalBedsCounty/TotalBedsState
+    
+    # Apply ratio's to IHME data
+    IHME_Region <- IHME_State
+    IHME_Region$allbed_mean = round(IHME_State$allbed_mean*PopRatio)
+    #IHME_Region$allbed_lower = round(IHME_State$allbed_lower*PopRatio)
+    #IHME_Region$allbed_upper = round(IHME_State$allbed_upper*PopRatio)
+    IHME_Region<-data.frame(IHME_Region$date, IHME_Region$allbed_mean) #, IHME_Region$allbed_lower, IHME_Region$allbed_upper)
+    colnames(IHME_Region)<-c("ForecastDate", "Expected Hospitalizations") #, "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
+    IHME_Region<- dplyr::filter(IHME_Region, ForecastDate >= Sys.Date())
+    
     IHME_Region$ForecastDate<-as.Date(IHME_Region$ForecastDate)
-    #IHME_Region[order(IHME_Region$ForecastDate),]
     IHME_Region <- dplyr::arrange(IHME_Region,ForecastDate)
-    current7 = match(Sys.Date(),IHME_Region$ForecastDate)+7
-    current14 = match(Sys.Date(),IHME_Region$ForecastDate)+14
-    current30 = match(Sys.Date(),IHME_Region$ForecastDate)+30
-    current60 = match(Sys.Date(),IHME_Region$ForecastDate)+60            
-    F1 = round(sum(IHME_Region[1:current7,2]))
-    F2 = round(sum(IHME_Region[1:current14,2]))
-    F3 = round(sum(IHME_Region[1:current30,2]))
-    F4 = round(sum(IHME_Region[1:current60,2]))            
-    NewDF <- data.frame(AFBaseLocations$Base[i],AFBaseLocations$State[i],F1,F2,F3,F4)  
-    names(NewDF) <- c("Installation","State","7 Day Forecast","14 Day Forecast","30 Day Forecast","60 Day Forecast")  
-    ForecastDataTable <- rbind(ForecastDataTable,NewDF)             
-  }
+    
+    DeathCounties<-subset(CovidDeaths, CountyFIPS %in% MyCounties$FIPS)
+    CaseRate <- subset(CovidConfirmedCasesRate, CountyFIPS %in% MyCounties$FIPS)
+    CountyDataTable<-cbind(MyCounties,rev(CovidCounties)[,1],rev(DeathCounties)[,1],rev(CaseRate)[,1])
+    CountyDataTable<-data.frame(CountyDataTable$State,CountyDataTable$County,CountyDataTable$Population, rev(CountyDataTable)[,3], rev(CountyDataTable)[,2],rev(CountyDataTable)[,1])
+    colnames(CountyDataTable)<-c("State","County","Population","Total Confirmed Cases","Total Fatalities", "Case Doubling Rate (days)" )
+    
+    ####################################################################################
+    #Mean Estimate
+    
+    #Next we use the calculated values, along with estimated values from the CDC. 
+    #The only input we want from the user is the social distancing rate. For this example, we just use 0.5
+    #CovidCounties<-subset(CovidConfirmedCases, CountyFIPS %in% IncludedCounties$FIPS)  
+    ActiveCases<-rev(CovidCounties)[1:7]
+    ActiveCases<-data.frame(CovidCounties[,1:4],ActiveCases[,1],MyCounties$Population, CountyDataTable$`Case Doubling Rate (days)`)
+    colnames(ActiveCases)<-c("CountyFIPS","CountyName","State","StateFIPS","CurrentCases", "Population", "Doubling Rate")
+    SIRinputs<-data.frame(sum(ActiveCases$CurrentCases),sum(ActiveCases$Population), mean(ActiveCases$`Doubling Rate`))  
+    colnames(SIRinputs)<-c("cases","pop","doubling")
+    
+    #Established Variables at the start for every county or populations  
+    cases<-SIRinputs$cases
+    pop<-SIRinputs$pop
+    
+    if(nrow(IHME_Region) == 0 || pop == 0){
+        NewDF <- data.frame(AFBaseLocations$Base[i],AFBaseLocations$State[i],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+        names(NewDF) <- c("Installation","State","Total Beds","7D IMHE Forecast","7D Peak","7D SEIAR Forecast","7D Peak","14D IMHE Forecast","14D Peak","14D SEIAR Forecast","14D Peak",
+                          "30D IMHE Forecast","30D Peak","30D SEIAR Forecast","30D Peak","60D IMHE Forecast","60D Peak","60D SEIAR Forecast","60D Peak")
+        ForecastDataTable <- rbind(ForecastDataTable,NewDF)        
+    }else{  
+        
+        
+        incubationtime<-5
+        latenttime<-2
+        doubling<-8  
+        recoverydays<-14
+        socialdistancing<-.15
+        hospitalizationrate<-5
+        icurate<-6
+        ventilatorrate<-3
+        hospitaltime<-3.5
+        icutime<-4
+        ventilatortime<-7
+        Ro<-2.5
+        
+        daysforecasted<-7
+        #SEIARProj<-SEIAR_Model_Run(cases,pop,5,2,8,14,.15,5,6,3,3.5,4,7,daysforecasted,2.5,.5)  
+        SEIARProj<-SEIAR_Model_Run(cases,pop,incubationtime,latenttime,doubling,recoverydays,socialdistancing,hospitalizationrate,
+                                   icurate,ventilatorrate,hospitaltime,icutime,ventilatortime,daysforecasted,Ro,.5)
+        MyDates<-seq(Sys.Date()-(length(CovidCounties)-80), length=daysforecasted, by="1 day")
+        DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
+        TotalData1<-data.frame(MyDates, SEIARProj$sir$hos_cum)
+        colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases")
+        colnames(TotalData1)<-c("ForecastDate", "Total Daily Cases")
+        DailyData<-DailyData[-1,]
+        DailyData<- dplyr::filter(DailyData, ForecastDate >= Sys.Date())
+        Peak<-which.max(DailyData$`Expected Daily Cases`)
+        Peak<-DailyData[Peak,2]
+        P1 = round(Peak)  
+        
+        colnames(DailyData)<-c("ForecastDate","Expected Hospitalizations")    
+        DailyData<-rbind(HistoricalData,DailyData)
+        drow = nrow(DailyData)
+        current = match(Sys.Date(),DailyData$ForecastDate)+7
+        C1 = round(sum(DailyData[1:drow,2]))
+        
+        daysforecasted<-14
+        SEIARProj<-SEIAR_Model_Run(cases,pop,incubationtime,latenttime,doubling,recoverydays,socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,ventilatortime,daysforecasted,Ro, .5)
+        MyDates<-seq(Sys.Date()-(length(CovidCounties)-80), length=daysforecasted, by="1 day")
+        DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
+        TotalData2<-data.frame(MyDates, SEIARProj$sir$hos_cum)
+        colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases")
+        colnames(TotalData2)<-c("ForecastDate", "Total Daily Cases")
+        DailyData<-DailyData[-1,]
+        DailyData<- dplyr::filter(DailyData, ForecastDate >= Sys.Date())
+        Peak<-which.max(DailyData$`Expected Daily Cases`)
+        Peak<-DailyData[Peak,2]
+        P2 = round(Peak)  
+        
+        colnames(DailyData)<-c("ForecastDate","Expected Hospitalizations")    
+        DailyData<-rbind(HistoricalData,DailyData)
+        drow = nrow(DailyData)
+        current = match(Sys.Date(),DailyData$ForecastDate)+14
+        C2 = round(sum(DailyData[1:drow,2]))
+        
+        daysforecasted<-30
+        SEIARProj<-SEIAR_Model_Run(cases,pop,incubationtime,latenttime,doubling,recoverydays,socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,ventilatortime,daysforecasted,Ro, .5)
+        MyDates<-seq(Sys.Date()-(length(CovidCounties)-80), length=daysforecasted, by="1 day")
+        DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
+        TotalData3<-data.frame(MyDates, SEIARProj$sir$hos_cum)
+        colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases")
+        colnames(TotalData3)<-c("ForecastDate", "Total Daily Cases")
+        DailyData<-DailyData[-1,]
+        DailyData<- dplyr::filter(DailyData, ForecastDate >= Sys.Date())
+        Peak<-which.max(DailyData$`Expected Daily Cases`)
+        Peak<-DailyData[Peak,2]
+        P3 = round(Peak)  
+        
+        colnames(DailyData)<-c("ForecastDate","Expected Hospitalizations")    
+        DailyData<-rbind(HistoricalData,DailyData)
+        drow = nrow(DailyData)
+        current = match(Sys.Date(),DailyData$ForecastDate)+30
+        C3 = round(sum(DailyData[1:drow,2]))        
+        
+        daysforecasted<-60
+        SEIARProj<-SEIAR_Model_Run(cases,pop,incubationtime,latenttime,doubling,recoverydays,socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,ventilatortime,daysforecasted,Ro, .5)
+        MyDates<-seq(Sys.Date()-(length(CovidCounties)-80), length=daysforecasted, by="1 day")
+        DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
+        TotalData4<-data.frame(MyDates, SEIARProj$sir$hos_cum)
+        colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases")
+        colnames(TotalData4)<-c("ForecastDate", "Total Daily Cases")  
+        DailyData<-DailyData[-1,]
+        DailyData<- dplyr::filter(DailyData, ForecastDate >= Sys.Date())
+        Peak<-which.max(DailyData$`Expected Daily Cases`)
+        Peak<-DailyData[Peak,2]
+        P4 = round(Peak)  
+        
+        colnames(DailyData)<-c("ForecastDate","Expected Hospitalizations")    
+        DailyData<-rbind(HistoricalData,DailyData)
+        drow = nrow(DailyData)
+        current = match(Sys.Date(),DailyData$ForecastDate)+60
+        C4 = round(sum(DailyData[1:drow,2]))     
+        
+        # C1 = round(TotalData1)
+        # C2 = round(TotalData2)
+        # C3 = round(TotalData3)
+        # c4 = round(TotalData4)   
+        
+        IHME_Region<-rbind(HistoricalData,IHME_Region)
+        IHME_Region$ForecastDate<-as.Date(IHME_Region$ForecastDate)
+        #IHME_Region[order(IHME_Region$ForecastDate),]
+        IHME_Region <- dplyr::arrange(IHME_Region,ForecastDate)
+        current7 = match(Sys.Date(),IHME_Region$ForecastDate)+7
+        current14 = match(Sys.Date(),IHME_Region$ForecastDate)+14
+        current30 = match(Sys.Date(),IHME_Region$ForecastDate)+30
+        current60 = match(Sys.Date(),IHME_Region$ForecastDate)+60            
+        I1 = round(sum(IHME_Region[1:current7,2]))
+        I2 = round(sum(IHME_Region[1:current14,2]))
+        I3 = round(sum(IHME_Region[1:current30,2]))
+        I4 = round(sum(IHME_Region[1:current60,2]))            
+        Peak1<-CalculateIHMEPeak(AFBaseLocations$Base[i],MyHospitals,50)
+        Peak2<-CalculateIHMEPeak(AFBaseLocations$Base[i],MyHospitals,50)
+        Peak3<-CalculateIHMEPeak(AFBaseLocations$Base[i],MyHospitals,50)
+        Peak4<-CalculateIHMEPeak(AFBaseLocations$Base[i],MyHospitals,50)
+        NewDF <- data.frame(AFBaseLocations$Base[i],AFBaseLocations$State[i],TotalBedsCounty,I1,Peak1,C1,P1,I2,Peak2,C2,P2,I3,Peak3,C3,P3,I4,Peak4,C4,P4)  
+        names(NewDF) <- c("Installation","State","Total Beds","7D IMHE Forecast","7D Peak","7D SEIAR Forecast","7D Peak","14D IMHE Forecast","14D Peak","14D SEIAR Forecast","14D Peak",
+                          "30D IMHE Forecast","30D Peak","30D SEIAR Forecast","30D Peak","60D IMHE Forecast","60D Peak","60D SEIAR Forecast","60D Peak")  
+        ForecastDataTable <- rbind(ForecastDataTable,NewDF) 
+        
+    }
 } 
+#write.table(ForecastDataTable, file = "InstallationForecastData.csv",sep = "\t", row.names = T)
+
 
 
 
@@ -1679,6 +1810,8 @@ NationalOverlayPlot<-function(SocialDistance, DaysForecasted){
         labs(color = "ID")+
         scale_y_continuous(labels = comma)
     
+    
+    
     ggplotly(projections)
     
 }
@@ -1909,14 +2042,14 @@ NationalOverlayPlot<-function(SocialDistance, DaysForecasted){
     OverlayData<-rbind(HistoricalData, OverlayData)
     
     
-    projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID, linetpye = ID)) +
+    projections <-  projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID, linetype = ID)) +
         geom_line() + 
         scale_colour_manual(values=c("tan", "blue", "black"))+
         scale_fill_manual(values = c("tan4", "cadetblue", "gray"))+
         scale_linetype_manual(values = c("dashed", "dashed", "solid"))+
         geom_ribbon(aes(ymin = `Lower Bound Hospitalizations`, ymax = `Upper Bound Hospitalizations`), 
                     alpha = .2) +
-        ggtitle("Projected Hospitalizations")+
+        ggtitle("Daily Hospitalizations")+
         theme_bw() + 
         theme(plot.title = element_text(face = "bold", size = 15, family = "sans"),
               axis.title = element_text(face = "bold", size = 11, family = "sans"),
@@ -1928,7 +2061,7 @@ NationalOverlayPlot<-function(SocialDistance, DaysForecasted){
               panel.grid.minor = element_blank(),
               panel.border = element_blank()) +
         scale_x_date(date_breaks = "2 week")+
-        labs(color = "ID")+
+        labs(color = "ID")
         scale_y_continuous(labels = comma)
     
     
@@ -2069,7 +2202,7 @@ CHIMENationalPlot<-function(SocialDistance, DaysForecasted){
     OverlayData<-rbind(HistoricalData, OverlayData)
     
     
-    projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID, linetpye = ID)) +
+    projections <-  ggplot(OverlayData, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID, linetype = ID)) +
         geom_line() +
         scale_colour_manual(values=c("tan","black"))+
         scale_fill_manual(values = c("tan4", "gray"))+
@@ -2090,7 +2223,7 @@ CHIMENationalPlot<-function(SocialDistance, DaysForecasted){
               panel.grid.major = element_blank(),
               panel.grid.minor = element_blank(),
               panel.border = element_blank()) +
-        scale_x_date(date_breaks = "3 week")+
+        scale_x_date(date_breaks = "2 week")+
         labs(color='')+
         scale_y_continuous(labels = comma)
     
@@ -2299,6 +2432,8 @@ CHIMELocalPlot<-function(SocialDistance, ForecastedDays, IncludedCounties, Stati
         
         
         DailyData<- dplyr::filter(DailyData, ForecastDate >= Sys.Date())
+        DailyData$ID<-rep("CHIME", nrow(DailyData))
+        HistoricalData$ID<-rep("Past Data", nrow(HistoricalData))
         
         PlottingData<-rbind(HistoricalData, DailyData)
         
@@ -2314,17 +2449,13 @@ CHIMELocalPlot<-function(SocialDistance, ForecastedDays, IncludedCounties, Stati
         
         
         #Plot for local area cumulative cases
-        projections <- ggplot(data = PlottingData, 
-                              aes(x=ForecastDate,
-                                  y=`Expected Daily Cases`,
-                                  ymin = `Minimum Daily Cases`,
-                                  ymax = `Maximum Daily Cases`)) + 
-            #geom_line(aes(x=ForecastDate, y=DailyData$`Expected Daily Cases`, ymin = DailyData$`Minimum Daily Cases` , ymax = DailyData$`Maximum Daily Cases`)) +
-            geom_line(linetype = "dashed", size = 0.75) +
-            geom_ribbon(alpha=0.3, fill = "tan4") +
-            geom_hline(yintercept = TotalBeds * (1-baseUtlz),
-                       linetype = "solid",
-                       color = "red") +
+        projections <- ggplot(PlottingData, aes(x=ForecastDate, y=`Expected Daily Cases`, color = ID, fill = ID, linetype = ID)) +
+            geom_line() +
+            scale_colour_manual(values=c("tan","black"))+
+            scale_fill_manual(values = c("tan4", "gray"))+
+            scale_linetype_manual(values = c("dashed", "solid"))+
+            geom_ribbon(aes(ymin = `Minimum Daily Cases`, ymax = `Maximum Daily Cases`), 
+                        alpha = .2) +
             #scale_colour_manual(values=c("Blue", "Orange", "Red"))+
             xlab('Date') +
             ylab('Daily Hospitalizations') +
@@ -2339,8 +2470,9 @@ CHIMELocalPlot<-function(SocialDistance, ForecastedDays, IncludedCounties, Stati
                   panel.grid.major = element_blank(),
                   panel.grid.minor = element_blank(),
                   panel.border = element_blank()) +
-            scale_x_date(date_breaks = "3 week")+
-            labs(color='')
+            scale_x_date(date_breaks = "2 week")+
+            labs(color='')+
+            scale_y_continuous(labels = comma)
         
         projections <- ggplotly(projections)
         projections <- projections %>% config(displayModeBar = FALSE)
@@ -2491,19 +2623,20 @@ CHIMELocalPlot<-function(SocialDistance, ForecastedDays, IncludedCounties, Stati
         DailyData$`Maximum Fatalities`<-cumsum(DailyData$`Maximum Fatalities`)
         
         DailyData<- dplyr::filter(DailyData, ForecastDate >= Sys.Date())
+        DailyData$ID<-rep("CHIME", nrow(DailyData))
+        HistoricalData$ID<-rep("Past Data", nrow(HistoricalData))
         
         PlottingData<-rbind(HistoricalData, DailyData)
         
         
         #Plot for local area cumulative cases
-        projections <- ggplot(data = PlottingData, 
-                              aes(x=ForecastDate,
-                                  y=`Expected Fatalities`,
-                                  ymin = `Minimum Fatalities`,
-                                  ymax = `Maximum Fatalities`)) + 
-            #geom_line(aes(x=ForecastDate, y=DailyData$`Expected Daily Cases`, ymin = DailyData$`Minimum Daily Cases` , ymax = DailyData$`Maximum Daily Cases`)) +
-            geom_line(linetype = "dashed", size = 0.75) +
-            geom_ribbon(alpha=0.3, fill = "tan4") +
+        projections <- ggplot(PlottingData, aes(x=ForecastDate, y=`Expected Fatalities`, color = ID, fill = ID, linetype = ID)) +
+            geom_line() +
+            scale_colour_manual(values=c("tan","black"))+
+            scale_fill_manual(values = c("tan4", "gray"))+
+            scale_linetype_manual(values = c("dashed", "solid"))+
+            geom_ribbon(aes(ymin = `Minimum Fatalities`, ymax = `Maximum Fatalities`), 
+                        alpha = .2) +
             #scale_colour_manual(values=c("Blue", "Orange", "Red"))+
             xlab('Date') +
             ylab('Fatalities') +
@@ -2518,8 +2651,9 @@ CHIMELocalPlot<-function(SocialDistance, ForecastedDays, IncludedCounties, Stati
                   panel.grid.major = element_blank(),
                   panel.grid.minor = element_blank(),
                   panel.border = element_blank()) +
-            scale_x_date(date_breaks = "3 week")+
-            labs(color='')
+            scale_x_date(date_breaks = "2 week")+
+            labs(color='')+
+            scale_y_continuous(labels = comma)
         
         projections<- ggplotly(projections)
         projections <- projections %>% config(displayModeBar = FALSE)
@@ -2566,32 +2700,36 @@ IHMELocalProjections<-function(MyCounties, IncludedHospitals, ChosenBase, Statis
         IHME_Region<-data.frame(IHME_Region$date, IHME_Region$allbed_mean, IHME_Region$allbed_lower, IHME_Region$allbed_upper)
         colnames(IHME_Region)<-c("ForecastDate", "Expected Hospitalizations", "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
         IHME_Region<- dplyr::filter(IHME_Region, ForecastDate >= Sys.Date())
-        IHME_Region$ID<-rep("ID", nrow(IHME_Region))
-        HistoricalData$ID<-rep("ID", nrow(HistoricalData))
+        IHME_Region$ID<-rep("IHME", nrow(IHME_Region))
+        HistoricalData$ID<-rep("Past Data", nrow(HistoricalData))
         
         IHME_Region<-rbind(HistoricalData,IHME_Region)
         IHME_Region$ForecastDate<-as.Date(IHME_Region$ForecastDate)
         
-        r1 <- ggplot(data=IHME_Region, aes(x=ForecastDate, y=`Expected Hospitalizations`, ymin=`Lower Bound Hospitalizations`, ymax=`Upper Bound Hospitalizations`)) +
-            geom_line(linetype = "dashed", size = 0.75) +
+        r1 <- ggplot(IHME_Region, aes(x=ForecastDate, y=`Expected Hospitalizations`, color = ID, fill = ID, linetype = ID)) +
+            geom_line() +
+            scale_colour_manual(values=c("blue","black"))+
+            scale_fill_manual(values = c("cadetblue", "gray"))+
             scale_linetype_manual(values = c("dashed", "solid"))+
-            geom_ribbon(alpha=0.3, fill = "cadetblue2") +
-            geom_hline(yintercept = TotalBeds * (1-baseUtlz),
-                       linetype = "solid",
-                       color = "red") +
-            labs(title = paste("IHME Projected Daily Hospitalizations"),
-                 x = "Date", y = "Daily Hospitalizations") +
-            theme_bw() +
+            geom_ribbon(aes(ymin = `Lower Bound Hospitalizations`, ymax = `Upper Bound Hospitalizations`), 
+                        alpha = .2) +
+            #scale_colour_manual(values=c("Blue", "Orange", "Red"))+
+            xlab('Date') +
+            ylab('Daily Hospitalizations') +
+            ggtitle("IHME Projected Daily Hospitalizations") +
+            theme_bw() + 
             theme(plot.title = element_text(face = "bold", size = 15, family = "sans"),
                   axis.title = element_text(face = "bold", size = 11, family = "sans"),
-                  axis.text.x = element_text(angle = 60, hjust = 1),
+                  axis.text.x = element_text(angle = 60, hjust = 1), 
                   axis.line = element_line(color = "black"),
                   legend.position = "top",
                   plot.background = element_blank(),
                   panel.grid.major = element_blank(),
                   panel.grid.minor = element_blank(),
                   panel.border = element_blank()) +
-            scale_x_date(date_breaks = "2 week")
+            scale_x_date(date_breaks = "2 week")+
+            labs(color='')+
+            scale_y_continuous(labels = comma)
         
         r1<- ggplotly(r1)
         r1 <- r1 %>% config(displayModeBar = FALSE)
@@ -2634,29 +2772,36 @@ IHMELocalProjections<-function(MyCounties, IncludedHospitals, ChosenBase, Statis
         IHME_Region<-data.frame(IHME_Region$date, IHME_Region$deaths_mean, IHME_Region$deaths_lower, IHME_Region$deaths_upper)
         colnames(IHME_Region)<-c("ForecastDate", "Expected Fatalities", "Lower Bound Fatalities","Upper Bound Fatalities")
         IHME_Region<- dplyr::filter(IHME_Region, ForecastDate >= Sys.Date())
+        IHME_Region$ID<-rep("IHME", nrow(IHME_Region))
+        HistoricalData$ID<-rep("Past Data", nrow(HistoricalData))
         
         IHME_Region<-rbind(HistoricalData,IHME_Region)
         IHME_Region$ForecastDate<-as.Date(IHME_Region$ForecastDate)
         
-        r1 <- ggplot(data=IHME_Region, aes(x=ForecastDate, y=`Expected Fatalities`, ymin=`Lower Bound Fatalities`, ymax=`Upper Bound Fatalities`)) +
-            geom_line(linetype = "dashed", size = 0.75) +
-            geom_ribbon(alpha=0.3, fill = "cadetblue2") +
-            # geom_hline(yintercept = TotalBedsCounty * 0.5,
-            #            linetype = "solid",
-            #            color = "red") +
-            labs(title = paste("IHME Projected Fatalities"),
-                 x = "Date", y = "Fatalities") +
-            theme_bw() +
+        r1 <- ggplot(IHME_Region, aes(x=ForecastDate, y=`Expected Fatalities`, color = ID, fill = ID, linetype = ID)) +
+            geom_line() +
+            scale_colour_manual(values=c("blue","black"))+
+            scale_fill_manual(values = c("cadetblue", "gray"))+
+            scale_linetype_manual(values = c("dashed", "solid"))+
+            geom_ribbon(aes(ymin = `Lower Bound Fatalities`, ymax = `Upper Bound Fatalities`), 
+                        alpha = .2) +
+            #scale_colour_manual(values=c("Blue", "Orange", "Red"))+
+            xlab('Date') +
+            ylab('Fatalities') +
+            ggtitle("IHME Projected Fatalities") +
+            theme_bw() + 
             theme(plot.title = element_text(face = "bold", size = 15, family = "sans"),
                   axis.title = element_text(face = "bold", size = 11, family = "sans"),
-                  axis.text.x = element_text(angle = 60, hjust = 1),
+                  axis.text.x = element_text(angle = 60, hjust = 1), 
                   axis.line = element_line(color = "black"),
                   legend.position = "top",
                   plot.background = element_blank(),
                   panel.grid.major = element_blank(),
                   panel.grid.minor = element_blank(),
                   panel.border = element_blank()) +
-            scale_x_date(date_breaks = "2 week")
+            scale_x_date(date_breaks = "2 week")+
+            labs(color='')+
+            scale_y_continuous(labels = comma)
         
         r1 <- ggplotly(r1)
         r1 <- r1 %>% config(displayModeBar = FALSE)

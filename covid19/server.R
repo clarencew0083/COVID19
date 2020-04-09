@@ -262,7 +262,6 @@ server <- function(input, output) {
     #Output the SEIAR CHIME projections with a max, min, and expected value
     output$SEIARProjection<-renderPlotly({
         BaseState<-dplyr::filter(AFBaseLocations, Base == input$Base)
-
         IncludedCounties<-GetCounties(input$Base,input$Radius)
         CHIMELocalPlot(input$social_dist, input$proj_days, IncludedCounties, input$StatisticType)
 
@@ -313,6 +312,15 @@ server <- function(input, output) {
         dt<-DT::datatable(ForecastDataTable, rownames = FALSE, options = list(dom = 't',ordering = F, "pageLength"=200))
         dt
     })
+    
+    output$downloadData <- downloadHandler(
+        filename = function() { 
+            paste("dataset-", Sys.Date(), ".csv", sep="")
+        },
+        content = function(file) {
+            write.csv(ForecastDataTable, file)
+            
+        })
     
     
     
