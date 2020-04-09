@@ -287,7 +287,6 @@ server <- function(input, output) {
         MyCounties<-GetCounties(input$Base,input$Radius)
         MyHospitals<-GetHospitals(input$Base,input$Radius)
         PlotOverlay(input$Base, MyCounties, MyHospitals, input$social_dist, input$proj_days, input$StatisticType)
-
     })
     
     
@@ -315,7 +314,7 @@ server <- function(input, output) {
     
     output$downloadData <- downloadHandler(
         filename = function() { 
-            paste("dataset-", Sys.Date(), ".csv", sep="")
+            paste("SummaryDataset-", Sys.Date(), ".csv", sep="")
         },
         content = function(file) {
             write.csv(ForecastDataTable, file)
@@ -373,6 +372,9 @@ server <- function(input, output) {
                 SourceLink)
         )
     })
+    
+    
+    
 
     # output$report <- downloadHandler(
     #     # For PDF output, change this to "report.pdf"

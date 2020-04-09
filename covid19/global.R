@@ -190,218 +190,318 @@ NationalDataTable$`Cases Per 100,000 People`<-round(NationalDataTable$`Total Cas
 # beds <- read.csv('beds.csv')
 # pops <- read.csv('pops.csv')
 # source('acme_support.R')
-
-
-
-# Output Projections  ---------------------------------------------------------------------------------------------------------------------------------------------------------------
-AFrow = nrow(AFBaseLocations)
-ForecastDataTable <- setNames(data.frame(matrix(ncol = 19, nrow = 0)), c("Installation","State","Total Beds","7D IMHE Forecast","7D Peak","7D SEIAR Forecast","7D Peak",
-                                                                         "14D IMHE Forecast","14D Peak","14D SEIAR Forecast","14D Peak","30D IMHE Forecast","30D Peak","30D SEIAR Forecast","30D Peak",
-                                                                         "60D IMHE Forecast","60D Peak","60D SEIAR Forecast","60D Peak"))
-for (i in 1:AFrow){
-    #Create a datatable with just the forecasted values for every installation
-    #Creating the stats and dataframes determined by the base we choose to look at.
-    #IHME_Model is the initial import data table from global.R
-    #BaseState<-AFBaseLocations$State[i]   #dplyr::filter(AFBaseLocations, Base == baseinput)
-    #IncludedHospitals<-GetHospitals()        
-    #GetHospitals
-    HospitalInfo$DistanceMiles = himd[,as.character(AFBaseLocations$Base[i])]
-    MyHospitals<-dplyr::filter(HospitalInfo, (DistanceMiles <= 50))
-    MyHospitals<-dplyr::filter(MyHospitals, (TYPE=="GENERAL ACUTE CARE") | (TYPE=="CRITICAL ACCESS"))
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+############################################################################################################################################
+#Use army models to create projections for the local area around the base
+#Establish function for army SEIAR model. This allows us to pass though a simple function to gather all statistics when we plot
+SEIAR_Model_Run<-function(num_init_cases, Pop.At.Risk, incub_period, latent_period, 
+                          doubling, recovery_days, social_rate, hospital_rate,
+                          icu_rate, ventilated_rate, hospital_dur, icu_dur, ventilated_dur, n_days, 
+                          secondary_cases = 2.5, distribution_e_to_a = 0.5){
     
-    IHME_State <- dplyr::filter(IHME_Model, State == AFBaseLocations$State[i])
-    TotalBedsCounty <- sum(MyHospitals$BEDS)
+    ###DEFINING COMPARTMENTS OF THE MODEL
+    total_infections <- num_init_cases / (hospital_rate/100) 
+    I <- total_infections 
+    S <- (Pop.At.Risk - I)
+    E <- (total_infections*secondary_cases) * distribution_e_to_a #Assuming that each infectious person will generate 2.5 secondary cases
+    A <- (total_infections*secondary_cases) * (1-distribution_e_to_a) ##Distributing the secondary cases between the E and A compartments
+    R <- 0
     
-    #Get regional and state populations
-    #MyCounties <- GetCounties()
-    #GetCounties
-    CountyInfo$DistanceMiles = cimd[,as.character(AFBaseLocations$Base[i])]
-    MyCounties<-dplyr::filter(CountyInfo, DistanceMiles <= 50)
-    CovidCounties<-subset(CovidConfirmedCases, CountyFIPS %in% MyCounties$FIPS)
-    HistoricalData<-colSums(CovidCounties[,5:length(CovidCounties)])
-    HistoricalDates<-seq(as.Date("2020-01-22"), length=length(HistoricalData), by="1 day")
-    HistoricalData<-data.frame(HistoricalDates, HistoricalData*.21) #, HistoricalData*.15, HistoricalData*.27)
-    colnames(HistoricalData)<-c("ForecastDate", "Expected Hospitalizations") #, "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
+    ###DEFINING PARAMETERS
+    intrinsic_growth_rate <- 2 ^(1 / doubling) -1
+    sigma <- 1/latent_period #Latent period (approx 2 days)
+    gamma_1 <- 1/(incub_period - latent_period)
+    gamma_2 <- 1/(recovery_days - latent_period - (incub_period - latent_period))
+    beta <- (intrinsic_growth_rate + (1/recovery_days)) / S * (1-social_rate/100)
+    r_t <- beta / (1/recovery_days) * S 
+    r_0 <- r_t / (1 - social_rate/100)
+    doubling_time_t <- 1 / log2(beta*S - (1/recovery_days) + 1)
     
-    StPopList <- dplyr::filter(CountyInfo, State == AFBaseLocations$State[i])
-    RegPop <- sum(MyCounties$Population)
-    StPop <- sum(StPopList$Population)
+    ###ITERATIVE LISTING OF MODEL
+    myList <- list()
+    myList$total_infections <- total_infections
+    myList$S <- S
+    myList$E <- E
+    myList$A <- A
+    myList$I <- I
+    myList$R <- R
+    myList$intrinsic_growth_rate <- intrinsic_growth_rate
+    myList$sigma <- sigma
+    myList$gamma_1 <- gamma_1
+    myList$gamma_2 <- gamma_2
+    myList$beta <- beta
+    myList$r_t <- r_t
+    myList$r_0 <- r_0
+    myList$doubling_time_t <- doubling_time_t
     
-    # Use Population ratio to scale IHME
-    PopRatio <- RegPop/StPop
+    #initial values
+    N = S + E + A + I + R
+    hos_add <- ((A+I) * hospital_rate/100)
+    hos_cum <- ((A+I) * hospital_rate/100)
+    icu_add <- (hos_add * icu_rate/100)
+    icu_cum <- (hos_cum * icu_rate/100)
     
-    # Get total hospital bed number across state
-    IncludedHospitalsST <- dplyr::filter(HospitalInfo, STATE == AFBaseLocations$State[i])
-    TotalBedsState <- sum(IncludedHospitalsST$BEDS)
+    #create the data frame
+    sir_data <- data.frame(t = 1,
+                           S = S,
+                           E = E,
+                           A = A,
+                           I = I,
+                           R = R,
+                           hos_add = hos_add,
+                           hos_cum = hos_cum,
+                           icu_add = hos_add * icu_rate/100,
+                           icu_cum = hos_cum * icu_rate/100,
+                           vent_add = icu_add * ventilated_rate/100,
+                           vent_cum = icu_cum * ventilated_rate/100,
+                           Id = 0
+    )
     
-    # Calculate bed ratio
-    BedProp <- TotalBedsCounty/TotalBedsState
-    
-    # Apply ratio's to IHME data
-    IHME_Region <- IHME_State
-    IHME_Region$allbed_mean = round(IHME_State$allbed_mean*PopRatio)
-    #IHME_Region$allbed_lower = round(IHME_State$allbed_lower*PopRatio)
-    #IHME_Region$allbed_upper = round(IHME_State$allbed_upper*PopRatio)
-    IHME_Region<-data.frame(IHME_Region$date, IHME_Region$allbed_mean) #, IHME_Region$allbed_lower, IHME_Region$allbed_upper)
-    colnames(IHME_Region)<-c("ForecastDate", "Expected Hospitalizations") #, "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
-    IHME_Region<- dplyr::filter(IHME_Region, ForecastDate >= Sys.Date())
-    
-    IHME_Region$ForecastDate<-as.Date(IHME_Region$ForecastDate)
-    IHME_Region <- dplyr::arrange(IHME_Region,ForecastDate)
-    
-    DeathCounties<-subset(CovidDeaths, CountyFIPS %in% MyCounties$FIPS)
-    CaseRate <- subset(CovidConfirmedCasesRate, CountyFIPS %in% MyCounties$FIPS)
-    CountyDataTable<-cbind(MyCounties,rev(CovidCounties)[,1],rev(DeathCounties)[,1],rev(CaseRate)[,1])
-    CountyDataTable<-data.frame(CountyDataTable$State,CountyDataTable$County,CountyDataTable$Population, rev(CountyDataTable)[,3], rev(CountyDataTable)[,2],rev(CountyDataTable)[,1])
-    colnames(CountyDataTable)<-c("State","County","Population","Total Confirmed Cases","Total Fatalities", "Case Doubling Rate (days)" )
-    
-    ####################################################################################
-    #Mean Estimate
-    
-    #Next we use the calculated values, along with estimated values from the CDC. 
-    #The only input we want from the user is the social distancing rate. For this example, we just use 0.5
-    #CovidCounties<-subset(CovidConfirmedCases, CountyFIPS %in% IncludedCounties$FIPS)  
-    ActiveCases<-rev(CovidCounties)[1:7]
-    ActiveCases<-data.frame(CovidCounties[,1:4],ActiveCases[,1],MyCounties$Population, CountyDataTable$`Case Doubling Rate (days)`)
-    colnames(ActiveCases)<-c("CountyFIPS","CountyName","State","StateFIPS","CurrentCases", "Population", "Doubling Rate")
-    SIRinputs<-data.frame(sum(ActiveCases$CurrentCases),sum(ActiveCases$Population), mean(ActiveCases$`Doubling Rate`))  
-    colnames(SIRinputs)<-c("cases","pop","doubling")
-    
-    #Established Variables at the start for every county or populations  
-    cases<-SIRinputs$cases
-    pop<-SIRinputs$pop
-    
-    if(nrow(IHME_Region) == 0 || pop == 0){
-        NewDF <- data.frame(AFBaseLocations$Base[i],AFBaseLocations$State[i],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
-        names(NewDF) <- c("Installation","State","Total Beds","7D IMHE Forecast","7D Peak","7D SEIAR Forecast","7D Peak","14D IMHE Forecast","14D Peak","14D SEIAR Forecast","14D Peak",
-                          "30D IMHE Forecast","30D Peak","30D SEIAR Forecast","30D Peak","60D IMHE Forecast","60D Peak","60D SEIAR Forecast","60D Peak")
-        ForecastDataTable <- rbind(ForecastDataTable,NewDF)        
-    }else{  
+    for(i in 2:n_days){
+        y <- seiar(S,E,A,I,R, beta, sigma, gamma_1, gamma_2, N)
+        S <- y$S
+        E <- y$E
+        A <- y$A
+        I <- y$I
+        R <- y$R
         
+        #calculate new infections
+        Id <- (sir_data$S[i-1] - S)
         
-        incubationtime<-5
-        latenttime<-2
-        doubling<-8  
-        recoverydays<-14
-        socialdistancing<-.15
-        hospitalizationrate<-5
-        icurate<-6
-        ventilatorrate<-3
-        hospitaltime<-3.5
-        icutime<-4
-        ventilatortime<-7
-        Ro<-2.5
+        #portion of the the newly infected that are in the hospital, ICU, and Vent
+        hos_add <- Id * hospital_rate/100
+        hos_cum <- sir_data$hos_cum[i-1] + hos_add
         
-        daysforecasted<-7
-        #SEIARProj<-SEIAR_Model_Run(cases,pop,5,2,8,14,.15,5,6,3,3.5,4,7,daysforecasted,2.5,.5)  
-        SEIARProj<-SEIAR_Model_Run(cases,pop,incubationtime,latenttime,doubling,recoverydays,socialdistancing,hospitalizationrate,
-                                   icurate,ventilatorrate,hospitaltime,icutime,ventilatortime,daysforecasted,Ro,.5)
-        MyDates<-seq(Sys.Date()-(length(CovidCounties)-80), length=daysforecasted, by="1 day")
-        DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
-        TotalData1<-data.frame(MyDates, SEIARProj$sir$hos_cum)
-        colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases")
-        colnames(TotalData1)<-c("ForecastDate", "Total Daily Cases")
-        DailyData<-DailyData[-1,]
-        DailyData<- dplyr::filter(DailyData, ForecastDate >= Sys.Date())
-        Peak<-which.max(DailyData$`Expected Daily Cases`)
-        Peak<-DailyData[Peak,2]
-        P1 = round(Peak)  
+        icu_add <- hos_add * icu_rate/100
+        icu_cum <- sir_data$icu_cum[i-1] + icu_add
         
-        colnames(DailyData)<-c("ForecastDate","Expected Hospitalizations")    
-        DailyData<-rbind(HistoricalData,DailyData)
-        drow = nrow(DailyData)
-        current = match(Sys.Date(),DailyData$ForecastDate)+7
-        C1 = round(sum(DailyData[1:drow,2]))
+        vent_add <- icu_add * ventilated_rate/100 
+        vent_cum <- sir_data$vent_cum[i-1] + vent_add
         
-        daysforecasted<-14
-        SEIARProj<-SEIAR_Model_Run(cases,pop,incubationtime,latenttime,doubling,recoverydays,socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,ventilatortime,daysforecasted,Ro, .5)
-        MyDates<-seq(Sys.Date()-(length(CovidCounties)-80), length=daysforecasted, by="1 day")
-        DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
-        TotalData2<-data.frame(MyDates, SEIARProj$sir$hos_cum)
-        colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases")
-        colnames(TotalData2)<-c("ForecastDate", "Total Daily Cases")
-        DailyData<-DailyData[-1,]
-        DailyData<- dplyr::filter(DailyData, ForecastDate >= Sys.Date())
-        Peak<-which.max(DailyData$`Expected Daily Cases`)
-        Peak<-DailyData[Peak,2]
-        P2 = round(Peak)  
+        temp <- data.frame(t = i,
+                           S = S,
+                           E = E,
+                           A = A,
+                           I = I,
+                           R = R,
+                           hos_add = hos_add,
+                           hos_cum = hos_cum,
+                           icu_add = icu_add,
+                           icu_cum = icu_cum,
+                           vent_add = vent_add,
+                           vent_cum = vent_cum,
+                           Id = Id
+        )
         
-        colnames(DailyData)<-c("ForecastDate","Expected Hospitalizations")    
-        DailyData<-rbind(HistoricalData,DailyData)
-        drow = nrow(DailyData)
-        current = match(Sys.Date(),DailyData$ForecastDate)+14
-        C2 = round(sum(DailyData[1:drow,2]))
-        
-        daysforecasted<-30
-        SEIARProj<-SEIAR_Model_Run(cases,pop,incubationtime,latenttime,doubling,recoverydays,socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,ventilatortime,daysforecasted,Ro, .5)
-        MyDates<-seq(Sys.Date()-(length(CovidCounties)-80), length=daysforecasted, by="1 day")
-        DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
-        TotalData3<-data.frame(MyDates, SEIARProj$sir$hos_cum)
-        colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases")
-        colnames(TotalData3)<-c("ForecastDate", "Total Daily Cases")
-        DailyData<-DailyData[-1,]
-        DailyData<- dplyr::filter(DailyData, ForecastDate >= Sys.Date())
-        Peak<-which.max(DailyData$`Expected Daily Cases`)
-        Peak<-DailyData[Peak,2]
-        P3 = round(Peak)  
-        
-        colnames(DailyData)<-c("ForecastDate","Expected Hospitalizations")    
-        DailyData<-rbind(HistoricalData,DailyData)
-        drow = nrow(DailyData)
-        current = match(Sys.Date(),DailyData$ForecastDate)+30
-        C3 = round(sum(DailyData[1:drow,2]))        
-        
-        daysforecasted<-60
-        SEIARProj<-SEIAR_Model_Run(cases,pop,incubationtime,latenttime,doubling,recoverydays,socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,ventilatortime,daysforecasted,Ro, .5)
-        MyDates<-seq(Sys.Date()-(length(CovidCounties)-80), length=daysforecasted, by="1 day")
-        DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
-        TotalData4<-data.frame(MyDates, SEIARProj$sir$hos_cum)
-        colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases")
-        colnames(TotalData4)<-c("ForecastDate", "Total Daily Cases")  
-        DailyData<-DailyData[-1,]
-        DailyData<- dplyr::filter(DailyData, ForecastDate >= Sys.Date())
-        Peak<-which.max(DailyData$`Expected Daily Cases`)
-        Peak<-DailyData[Peak,2]
-        P4 = round(Peak)  
-        
-        colnames(DailyData)<-c("ForecastDate","Expected Hospitalizations")    
-        DailyData<-rbind(HistoricalData,DailyData)
-        drow = nrow(DailyData)
-        current = match(Sys.Date(),DailyData$ForecastDate)+60
-        C4 = round(sum(DailyData[1:drow,2]))     
-        
-        # C1 = round(TotalData1)
-        # C2 = round(TotalData2)
-        # C3 = round(TotalData3)
-        # c4 = round(TotalData4)   
-        
-        IHME_Region<-rbind(HistoricalData,IHME_Region)
-        IHME_Region$ForecastDate<-as.Date(IHME_Region$ForecastDate)
-        #IHME_Region[order(IHME_Region$ForecastDate),]
-        IHME_Region <- dplyr::arrange(IHME_Region,ForecastDate)
-        current7 = match(Sys.Date(),IHME_Region$ForecastDate)+7
-        current14 = match(Sys.Date(),IHME_Region$ForecastDate)+14
-        current30 = match(Sys.Date(),IHME_Region$ForecastDate)+30
-        current60 = match(Sys.Date(),IHME_Region$ForecastDate)+60            
-        I1 = round(sum(IHME_Region[1:current7,2]))
-        I2 = round(sum(IHME_Region[1:current14,2]))
-        I3 = round(sum(IHME_Region[1:current30,2]))
-        I4 = round(sum(IHME_Region[1:current60,2]))            
-        Peak1<-CalculateIHMEPeak(AFBaseLocations$Base[i],MyHospitals,50)
-        Peak2<-CalculateIHMEPeak(AFBaseLocations$Base[i],MyHospitals,50)
-        Peak3<-CalculateIHMEPeak(AFBaseLocations$Base[i],MyHospitals,50)
-        Peak4<-CalculateIHMEPeak(AFBaseLocations$Base[i],MyHospitals,50)
-        NewDF <- data.frame(AFBaseLocations$Base[i],AFBaseLocations$State[i],TotalBedsCounty,I1,Peak1,C1,P1,I2,Peak2,C2,P2,I3,Peak3,C3,P3,I4,Peak4,C4,P4)  
-        names(NewDF) <- c("Installation","State","Total Beds","7D IMHE Forecast","7D Peak","7D SEIAR Forecast","7D Peak","14D IMHE Forecast","14D Peak","14D SEIAR Forecast","14D Peak",
-                          "30D IMHE Forecast","30D Peak","30D SEIAR Forecast","30D Peak","60D IMHE Forecast","60D Peak","60D SEIAR Forecast","60D Peak")  
-        ForecastDataTable <- rbind(ForecastDataTable,NewDF) 
-        
+        sir_data <- rbind(sir_data,temp)
     }
-} 
-#write.table(ForecastDataTable, file = "InstallationForecastData.csv",sep = "\t", row.names = T)
+    
+    #doing some weird stuff to get a rolling sum of hospital impacts based on length of stay (los)
+    if(n_days > hospital_dur){
+        h_c <- rollsum(sir_data$hos_add,hospital_dur)
+        sir_data$hos_cum <- c(sir_data$hos_cum[1:(n_days - length(h_c))],h_c)
+    } 
+    if(n_days > icu_dur){
+        i_c <- rollsum(sir_data$icu_add,icu_dur)
+        sir_data$icu_cum <- c(sir_data$icu_cum[1:(n_days - length(i_c))],i_c)
+    } 
+    if(n_days > ventilated_dur){
+        v_c <- rollsum(sir_data$vent_add,ventilated_dur)
+        sir_data$vent_cum <- c(sir_data$vent_cum[1:(n_days - length(v_c))],v_c)
+    } 
+    #write.csv(sir_data, file = 'test.csv') # for testing
+    h_m <- round(max(sir_data$hos_cum), 0)
+    i_m <- round(max(sir_data$icu_cum), 0)
+    v_m <- round(max(sir_data$vent_cum), 0)
+    myList$sir <- sir_data
+    myList$hos_max <- h_m
+    myList$icu_max <- i_m
+    myList$vent_max <- v_m 
+    
+    h_m <- sir_data$t[which.max(sir_data$hos_cum)][1]
+    i_m <- sir_data$t[which.max(sir_data$icu_cum)][1]
+    v_m <- sir_data$t[which.max(sir_data$vent_cum)][1]
+    myList$hos_t_max <- h_m
+    myList$icu_t_max <- i_m
+    myList$vent_t_max <- v_m 
+    
+    h_m <- round(max(sir_data$hos_add), 0)
+    i_m <- round(max(sir_data$icu_add), 0)
+    v_m <- round(max(sir_data$vent_add), 0)
+    
+    myList$hos_add <- h_m
+    myList$icu_add <- i_m
+    myList$vent_add <- v_m 
+    return(myList)
+}
+
+seiar<-function(S,E,A,I,R, beta, sigma, gamma_1, gamma_2, N){
+    Sn <- (-beta * S * (A + I)) + S
+    En <- ((beta * S * (A + I)) - (sigma * E)) + E
+    An <- ((sigma * E) - (gamma_1 * A)) + A
+    In <- ((gamma_1 * A) - (gamma_2 * I)) + I
+    Rn <- (gamma_2 * I) + R
+    
+    if(Sn < 0) Sn = 0
+    if(En < 0) En = 0
+    if(An < 0) An = 0
+    if(In < 0) In = 0
+    if(Rn < 0) Rn = 0
+    
+    scale = N / (Sn + En + An + In + Rn)
+    myListSIR <- list()
+    myListSIR$S <- (Sn * scale)
+    myListSIR$E <- (En * scale)
+    myListSIR$A <- (An * scale)
+    myListSIR$I <- (In * scale)
+    myListSIR$R <- (Rn * scale)
+    return(myListSIR)
+}
 
 
+SIR_Model_Run<-function(num_init_cases, Pop.At.Risk, detect_prob, 
+                        doubling, recovery_days, social_rate, hospital_rate,
+                        icu_rate, ventilated_rate, hospital_dur, icu_dur, ventilated_dur, n_days){
+    #create parameters for model
+    total_infections <- num_init_cases / (hospital_rate/100)
+    I <- total_infections / (detect_prob / 100) 
+    S <- (Pop.At.Risk - I)
+    R <- 0
+    intrinsic_growth_rate = 2 ^(1 / doubling) -1
+    recovery_days <- recovery_days
+    gamma <- 1 / recovery_days
+    beta <- (intrinsic_growth_rate + gamma) / S * (1-social_rate/100)
+    r_t <- beta / gamma * S 
+    r_0 <- r_t / (1 - social_rate/100)
+    doubling_time_t <- 1 / log2(beta*S - gamma + 1)
+    myList <- list()
+    myList$total_infections <- total_infections
+    myList$S <- S
+    myList$I <- I
+    myList$R <- R
+    myList$intrinsic_growth_rate <- intrinsic_growth_rate
+    myList$recovery_days <- recovery_days
+    myList$gamma <- gamma
+    myList$beta <- beta
+    myList$r_t <- r_t
+    myList$r_0 <- r_0
+    myList$doubling_time_t <- doubling_time_t
+    
+    
+    
+    
+    #initial values
+    N = S + I + R
+    hos_add <- (I * hospital_rate/100)
+    hos_cum <- (I * hospital_rate/100)
+    icu_add <- (hos_add * icu_rate/100)
+    icu_cum <- (hos_cum * icu_rate/100)
+    
+    #create the data frame
+    sir_data <- data.frame(t = 1,
+                           S = S,
+                           I = I,
+                           R = R,
+                           hos_add = hos_add,
+                           hos_cum = hos_cum,
+                           icu_add = hos_add * icu_rate/100,
+                           icu_cum = hos_cum * icu_rate/100,
+                           vent_add = icu_add * ventilated_rate/100,
+                           vent_cum = icu_cum * ventilated_rate/100,
+                           Id = 0
+    )
+    
+    for(i in 2:n_days){
+        y <- sir(S,I,R, beta, gamma, N)
+        S <- y$S
+        I <- y$I
+        R <- y$R
+        
+        #calculate new infections
+        Id <- (sir_data$S[i-1] - S)
+        
+        #portion of the the newly infected that are in the hospital, ICU, and Vent
+        hos_add <- Id * hospital_rate/100
+        hos_cum <- sir_data$hos_cum[i-1] + hos_add
+        
+        icu_add <- hos_add * icu_rate/100
+        icu_cum <- sir_data$icu_cum[i-1] + icu_add
+        
+        vent_add <- icu_add * ventilated_rate/100 
+        vent_cum <- sir_data$vent_cum[i-1] + vent_add
+        
+        temp <- data.frame(t = i,
+                           S = S,
+                           I = I,
+                           R = R,
+                           hos_add = hos_add,
+                           hos_cum = hos_cum,
+                           icu_add = icu_add,
+                           icu_cum = icu_cum,
+                           vent_add = vent_add,
+                           vent_cum = vent_cum,
+                           Id = Id
+        )
+        
+        sir_data <- rbind(sir_data,temp)
+    }
+    
+    #doing some weird stuff to get a rolling sum of hospital impacts based on length of stay (los)
+    if(n_days > hospital_dur){
+        h_c <- rollsum(sir_data$hos_add,hospital_dur)
+        sir_data$hos_cum <- c(sir_data$hos_cum[1:(n_days - length(h_c))],h_c)
+    } 
+    if(n_days > icu_dur){
+        i_c <- rollsum(sir_data$icu_add,icu_dur)
+        sir_data$icu_cum <- c(sir_data$icu_cum[1:(n_days - length(i_c))],i_c)
+    } 
+    if(n_days > ventilated_dur){
+        v_c <- rollsum(sir_data$vent_add,ventilated_dur)
+        sir_data$vent_cum <- c(sir_data$vent_cum[1:(n_days - length(v_c))],v_c)
+    } 
+    #write.csv(sir_data, file = 'test.csv') # for testing
+    h_m <- round(max(sir_data$hos_cum), 0)
+    i_m <- round(max(sir_data$icu_cum), 0)
+    v_m <- round(max(sir_data$vent_cum), 0)
+    myList$sir <- sir_data
+    myList$hos_max <- h_m
+    myList$icu_max <- i_m
+    myList$vent_max <- v_m 
+    
+    h_m <- sir_data$t[which.max(sir_data$hos_cum)][1]
+    i_m <- sir_data$t[which.max(sir_data$icu_cum)][1]
+    v_m <- sir_data$t[which.max(sir_data$vent_cum)][1]
+    myList$hos_t_max <- h_m
+    myList$icu_t_max <- i_m
+    myList$vent_t_max <- v_m 
+    
+    h_m <- round(max(sir_data$hos_add), 0)
+    i_m <- round(max(sir_data$icu_add), 0)
+    v_m <- round(max(sir_data$vent_add), 0)
+    
+    myList$hos_add <- h_m
+    myList$icu_add <- i_m
+    myList$vent_add <- v_m 
+    return(myList)
+}
 
+sir<-function(S,I,R, beta, gamma, N){
+    Sn <- (-beta * S * I) + S
+    In = (beta * S * I - gamma * I) + I
+    Rn = gamma * I + R
+    if(Sn < 0) Sn = 0
+    if(In < 0) In = 0
+    if(Rn < 0) Rn = 0
+    
+    scale = N / (Sn + In + Rn )
+    myListSIR <- list()
+    myListSIR$S <- (Sn * scale)
+    myListSIR$I <- (In * scale)
+    myListSIR$R <- (Rn * scale)
+    return(myListSIR)
+}
 
 
 
@@ -807,321 +907,6 @@ CovidCasesCumChart<-function(ChosenBase, Radius, IncludedCounties, IncludedHospi
     
     p2
 }
-
-
-##########################################################################################################
-##########################################################################################################
-##########################################################################################################
-############################################################################################################################################
-#Use army models to create projections for the local area around the base
-#Establish function for army SEIAR model. This allows us to pass though a simple function to gather all statistics when we plot
-SEIAR_Model_Run<-function(num_init_cases, Pop.At.Risk, incub_period, latent_period, 
-                          doubling, recovery_days, social_rate, hospital_rate,
-                          icu_rate, ventilated_rate, hospital_dur, icu_dur, ventilated_dur, n_days, 
-                          secondary_cases = 2.5, distribution_e_to_a = 0.5){
-    
-    ###DEFINING COMPARTMENTS OF THE MODEL
-    total_infections <- num_init_cases / (hospital_rate/100) 
-    I <- total_infections 
-    S <- (Pop.At.Risk - I)
-    E <- (total_infections*secondary_cases) * distribution_e_to_a #Assuming that each infectious person will generate 2.5 secondary cases
-    A <- (total_infections*secondary_cases) * (1-distribution_e_to_a) ##Distributing the secondary cases between the E and A compartments
-    R <- 0
-    
-    ###DEFINING PARAMETERS
-    intrinsic_growth_rate <- 2 ^(1 / doubling) -1
-    sigma <- 1/latent_period #Latent period (approx 2 days)
-    gamma_1 <- 1/(incub_period - latent_period)
-    gamma_2 <- 1/(recovery_days - latent_period - (incub_period - latent_period))
-    beta <- (intrinsic_growth_rate + (1/recovery_days)) / S * (1-social_rate/100)
-    r_t <- beta / (1/recovery_days) * S 
-    r_0 <- r_t / (1 - social_rate/100)
-    doubling_time_t <- 1 / log2(beta*S - (1/recovery_days) + 1)
-    
-    ###ITERATIVE LISTING OF MODEL
-    myList <- list()
-    myList$total_infections <- total_infections
-    myList$S <- S
-    myList$E <- E
-    myList$A <- A
-    myList$I <- I
-    myList$R <- R
-    myList$intrinsic_growth_rate <- intrinsic_growth_rate
-    myList$sigma <- sigma
-    myList$gamma_1 <- gamma_1
-    myList$gamma_2 <- gamma_2
-    myList$beta <- beta
-    myList$r_t <- r_t
-    myList$r_0 <- r_0
-    myList$doubling_time_t <- doubling_time_t
-    
-    #initial values
-    N = S + E + A + I + R
-    hos_add <- ((A+I) * hospital_rate/100)
-    hos_cum <- ((A+I) * hospital_rate/100)
-    icu_add <- (hos_add * icu_rate/100)
-    icu_cum <- (hos_cum * icu_rate/100)
-    
-    #create the data frame
-    sir_data <- data.frame(t = 1,
-                           S = S,
-                           E = E,
-                           A = A,
-                           I = I,
-                           R = R,
-                           hos_add = hos_add,
-                           hos_cum = hos_cum,
-                           icu_add = hos_add * icu_rate/100,
-                           icu_cum = hos_cum * icu_rate/100,
-                           vent_add = icu_add * ventilated_rate/100,
-                           vent_cum = icu_cum * ventilated_rate/100,
-                           Id = 0
-    )
-    
-    for(i in 2:n_days){
-        y <- seiar(S,E,A,I,R, beta, sigma, gamma_1, gamma_2, N)
-        S <- y$S
-        E <- y$E
-        A <- y$A
-        I <- y$I
-        R <- y$R
-        
-        #calculate new infections
-        Id <- (sir_data$S[i-1] - S)
-        
-        #portion of the the newly infected that are in the hospital, ICU, and Vent
-        hos_add <- Id * hospital_rate/100
-        hos_cum <- sir_data$hos_cum[i-1] + hos_add
-        
-        icu_add <- hos_add * icu_rate/100
-        icu_cum <- sir_data$icu_cum[i-1] + icu_add
-        
-        vent_add <- icu_add * ventilated_rate/100 
-        vent_cum <- sir_data$vent_cum[i-1] + vent_add
-        
-        temp <- data.frame(t = i,
-                           S = S,
-                           E = E,
-                           A = A,
-                           I = I,
-                           R = R,
-                           hos_add = hos_add,
-                           hos_cum = hos_cum,
-                           icu_add = icu_add,
-                           icu_cum = icu_cum,
-                           vent_add = vent_add,
-                           vent_cum = vent_cum,
-                           Id = Id
-        )
-        
-        sir_data <- rbind(sir_data,temp)
-    }
-    
-    #doing some weird stuff to get a rolling sum of hospital impacts based on length of stay (los)
-    if(n_days > hospital_dur){
-        h_c <- rollsum(sir_data$hos_add,hospital_dur)
-        sir_data$hos_cum <- c(sir_data$hos_cum[1:(n_days - length(h_c))],h_c)
-    } 
-    if(n_days > icu_dur){
-        i_c <- rollsum(sir_data$icu_add,icu_dur)
-        sir_data$icu_cum <- c(sir_data$icu_cum[1:(n_days - length(i_c))],i_c)
-    } 
-    if(n_days > ventilated_dur){
-        v_c <- rollsum(sir_data$vent_add,ventilated_dur)
-        sir_data$vent_cum <- c(sir_data$vent_cum[1:(n_days - length(v_c))],v_c)
-    } 
-    #write.csv(sir_data, file = 'test.csv') # for testing
-    h_m <- round(max(sir_data$hos_cum), 0)
-    i_m <- round(max(sir_data$icu_cum), 0)
-    v_m <- round(max(sir_data$vent_cum), 0)
-    myList$sir <- sir_data
-    myList$hos_max <- h_m
-    myList$icu_max <- i_m
-    myList$vent_max <- v_m 
-    
-    h_m <- sir_data$t[which.max(sir_data$hos_cum)][1]
-    i_m <- sir_data$t[which.max(sir_data$icu_cum)][1]
-    v_m <- sir_data$t[which.max(sir_data$vent_cum)][1]
-    myList$hos_t_max <- h_m
-    myList$icu_t_max <- i_m
-    myList$vent_t_max <- v_m 
-    
-    h_m <- round(max(sir_data$hos_add), 0)
-    i_m <- round(max(sir_data$icu_add), 0)
-    v_m <- round(max(sir_data$vent_add), 0)
-    
-    myList$hos_add <- h_m
-    myList$icu_add <- i_m
-    myList$vent_add <- v_m 
-    return(myList)
-}
-
-seiar<-function(S,E,A,I,R, beta, sigma, gamma_1, gamma_2, N){
-    Sn <- (-beta * S * (A + I)) + S
-    En <- ((beta * S * (A + I)) - (sigma * E)) + E
-    An <- ((sigma * E) - (gamma_1 * A)) + A
-    In <- ((gamma_1 * A) - (gamma_2 * I)) + I
-    Rn <- (gamma_2 * I) + R
-    
-    if(Sn < 0) Sn = 0
-    if(En < 0) En = 0
-    if(An < 0) An = 0
-    if(In < 0) In = 0
-    if(Rn < 0) Rn = 0
-    
-    scale = N / (Sn + En + An + In + Rn)
-    myListSIR <- list()
-    myListSIR$S <- (Sn * scale)
-    myListSIR$E <- (En * scale)
-    myListSIR$A <- (An * scale)
-    myListSIR$I <- (In * scale)
-    myListSIR$R <- (Rn * scale)
-    return(myListSIR)
-}
-
-
-SIR_Model_Run<-function(num_init_cases, Pop.At.Risk, detect_prob, 
-                        doubling, recovery_days, social_rate, hospital_rate,
-                        icu_rate, ventilated_rate, hospital_dur, icu_dur, ventilated_dur, n_days){
-    #create parameters for model
-    total_infections <- num_init_cases / (hospital_rate/100)
-    I <- total_infections / (detect_prob / 100) 
-    S <- (Pop.At.Risk - I)
-    R <- 0
-    intrinsic_growth_rate = 2 ^(1 / doubling) -1
-    recovery_days <- recovery_days
-    gamma <- 1 / recovery_days
-    beta <- (intrinsic_growth_rate + gamma) / S * (1-social_rate/100)
-    r_t <- beta / gamma * S 
-    r_0 <- r_t / (1 - social_rate/100)
-    doubling_time_t <- 1 / log2(beta*S - gamma + 1)
-    myList <- list()
-    myList$total_infections <- total_infections
-    myList$S <- S
-    myList$I <- I
-    myList$R <- R
-    myList$intrinsic_growth_rate <- intrinsic_growth_rate
-    myList$recovery_days <- recovery_days
-    myList$gamma <- gamma
-    myList$beta <- beta
-    myList$r_t <- r_t
-    myList$r_0 <- r_0
-    myList$doubling_time_t <- doubling_time_t
-    
-    
-    
-    
-    #initial values
-    N = S + I + R
-    hos_add <- (I * hospital_rate/100)
-    hos_cum <- (I * hospital_rate/100)
-    icu_add <- (hos_add * icu_rate/100)
-    icu_cum <- (hos_cum * icu_rate/100)
-    
-    #create the data frame
-    sir_data <- data.frame(t = 1,
-                           S = S,
-                           I = I,
-                           R = R,
-                           hos_add = hos_add,
-                           hos_cum = hos_cum,
-                           icu_add = hos_add * icu_rate/100,
-                           icu_cum = hos_cum * icu_rate/100,
-                           vent_add = icu_add * ventilated_rate/100,
-                           vent_cum = icu_cum * ventilated_rate/100,
-                           Id = 0
-    )
-    
-    for(i in 2:n_days){
-        y <- sir(S,I,R, beta, gamma, N)
-        S <- y$S
-        I <- y$I
-        R <- y$R
-        
-        #calculate new infections
-        Id <- (sir_data$S[i-1] - S)
-        
-        #portion of the the newly infected that are in the hospital, ICU, and Vent
-        hos_add <- Id * hospital_rate/100
-        hos_cum <- sir_data$hos_cum[i-1] + hos_add
-        
-        icu_add <- hos_add * icu_rate/100
-        icu_cum <- sir_data$icu_cum[i-1] + icu_add
-        
-        vent_add <- icu_add * ventilated_rate/100 
-        vent_cum <- sir_data$vent_cum[i-1] + vent_add
-        
-        temp <- data.frame(t = i,
-                           S = S,
-                           I = I,
-                           R = R,
-                           hos_add = hos_add,
-                           hos_cum = hos_cum,
-                           icu_add = icu_add,
-                           icu_cum = icu_cum,
-                           vent_add = vent_add,
-                           vent_cum = vent_cum,
-                           Id = Id
-        )
-        
-        sir_data <- rbind(sir_data,temp)
-    }
-    
-    #doing some weird stuff to get a rolling sum of hospital impacts based on length of stay (los)
-    if(n_days > hospital_dur){
-        h_c <- rollsum(sir_data$hos_add,hospital_dur)
-        sir_data$hos_cum <- c(sir_data$hos_cum[1:(n_days - length(h_c))],h_c)
-    } 
-    if(n_days > icu_dur){
-        i_c <- rollsum(sir_data$icu_add,icu_dur)
-        sir_data$icu_cum <- c(sir_data$icu_cum[1:(n_days - length(i_c))],i_c)
-    } 
-    if(n_days > ventilated_dur){
-        v_c <- rollsum(sir_data$vent_add,ventilated_dur)
-        sir_data$vent_cum <- c(sir_data$vent_cum[1:(n_days - length(v_c))],v_c)
-    } 
-    #write.csv(sir_data, file = 'test.csv') # for testing
-    h_m <- round(max(sir_data$hos_cum), 0)
-    i_m <- round(max(sir_data$icu_cum), 0)
-    v_m <- round(max(sir_data$vent_cum), 0)
-    myList$sir <- sir_data
-    myList$hos_max <- h_m
-    myList$icu_max <- i_m
-    myList$vent_max <- v_m 
-    
-    h_m <- sir_data$t[which.max(sir_data$hos_cum)][1]
-    i_m <- sir_data$t[which.max(sir_data$icu_cum)][1]
-    v_m <- sir_data$t[which.max(sir_data$vent_cum)][1]
-    myList$hos_t_max <- h_m
-    myList$icu_t_max <- i_m
-    myList$vent_t_max <- v_m 
-    
-    h_m <- round(max(sir_data$hos_add), 0)
-    i_m <- round(max(sir_data$icu_add), 0)
-    v_m <- round(max(sir_data$vent_add), 0)
-    
-    myList$hos_add <- h_m
-    myList$icu_add <- i_m
-    myList$vent_add <- v_m 
-    return(myList)
-}
-
-sir<-function(S,I,R, beta, gamma, N){
-    Sn <- (-beta * S * I) + S
-    In = (beta * S * I - gamma * I) + I
-    Rn = gamma * I + R
-    if(Sn < 0) Sn = 0
-    if(In < 0) In = 0
-    if(Rn < 0) Rn = 0
-    
-    scale = N / (Sn + In + Rn )
-    myListSIR <- list()
-    myListSIR$S <- (Sn * scale)
-    myListSIR$I <- (In * scale)
-    myListSIR$R <- (Rn * scale)
-    return(myListSIR)
-}
-
 
 #Create charts for projecting local health data
 ##########################################################################################################
@@ -2809,6 +2594,217 @@ IHMELocalProjections<-function(MyCounties, IncludedHospitals, ChosenBase, Statis
         r1
     }
 }
+
+
+# Output Projections  ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+AFrow = nrow(AFBaseLocations)
+ForecastDataTable <- setNames(data.frame(matrix(ncol = 19, nrow = 0)), c("Installation","State","Total Beds","7D IMHE Forecast","7D Peak","7D SEIAR Forecast","7D Peak",
+                                                                         "14D IMHE Forecast","14D Peak","14D SEIAR Forecast","14D Peak","30D IMHE Forecast","30D Peak","30D SEIAR Forecast","30D Peak",
+                                                                         "60D IMHE Forecast","60D Peak","60D SEIAR Forecast","60D Peak"))
+for (i in 1:AFrow){
+    #Create a datatable with just the forecasted values for every installation
+    #Creating the stats and dataframes determined by the base we choose to look at.
+    #IHME_Model is the initial import data table from global.R
+    #BaseState<-AFBaseLocations$State[i]   #dplyr::filter(AFBaseLocations, Base == baseinput)
+    #IncludedHospitals<-GetHospitals()        
+    #GetHospitals
+    HospitalInfo$DistanceMiles = himd[,as.character(AFBaseLocations$Base[i])]
+    MyHospitals<-dplyr::filter(HospitalInfo, (DistanceMiles <= 50))
+    MyHospitals<-dplyr::filter(MyHospitals, (TYPE=="GENERAL ACUTE CARE") | (TYPE=="CRITICAL ACCESS"))
+    
+    IHME_State <- dplyr::filter(IHME_Model, State == AFBaseLocations$State[i])
+    TotalBedsCounty <- sum(MyHospitals$BEDS)
+    
+    #Get regional and state populations
+    #MyCounties <- GetCounties()
+    #GetCounties
+    CountyInfo$DistanceMiles = cimd[,as.character(AFBaseLocations$Base[i])]
+    MyCounties<-dplyr::filter(CountyInfo, DistanceMiles <= 50)
+    CovidCounties<-subset(CovidConfirmedCases, CountyFIPS %in% MyCounties$FIPS)
+    HistoricalData<-colSums(CovidCounties[,5:length(CovidCounties)])
+    HistoricalDates<-seq(as.Date("2020-01-22"), length=length(HistoricalData), by="1 day")
+    HistoricalData<-data.frame(HistoricalDates, HistoricalData*.21) #, HistoricalData*.15, HistoricalData*.27)
+    colnames(HistoricalData)<-c("ForecastDate", "Expected Hospitalizations") #, "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
+    
+    StPopList <- dplyr::filter(CountyInfo, State == AFBaseLocations$State[i])
+    RegPop <- sum(MyCounties$Population)
+    StPop <- sum(StPopList$Population)
+    
+    # Use Population ratio to scale IHME
+    PopRatio <- RegPop/StPop
+    
+    # Get total hospital bed number across state
+    IncludedHospitalsST <- dplyr::filter(HospitalInfo, STATE == AFBaseLocations$State[i])
+    TotalBedsState <- sum(IncludedHospitalsST$BEDS)
+    
+    # Calculate bed ratio
+    BedProp <- TotalBedsCounty/TotalBedsState
+    
+    # Apply ratio's to IHME data
+    IHME_Region <- IHME_State
+    IHME_Region$allbed_mean = round(IHME_State$allbed_mean*PopRatio)
+    #IHME_Region$allbed_lower = round(IHME_State$allbed_lower*PopRatio)
+    #IHME_Region$allbed_upper = round(IHME_State$allbed_upper*PopRatio)
+    IHME_Region<-data.frame(IHME_Region$date, IHME_Region$allbed_mean) #, IHME_Region$allbed_lower, IHME_Region$allbed_upper)
+    colnames(IHME_Region)<-c("ForecastDate", "Expected Hospitalizations") #, "Lower Bound Hospitalizations","Upper Bound Hospitalizations")
+    IHME_Region<- dplyr::filter(IHME_Region, ForecastDate >= Sys.Date())
+    
+    IHME_Region$ForecastDate<-as.Date(IHME_Region$ForecastDate)
+    IHME_Region <- dplyr::arrange(IHME_Region,ForecastDate)
+    
+    DeathCounties<-subset(CovidDeaths, CountyFIPS %in% MyCounties$FIPS)
+    CaseRate <- subset(CovidConfirmedCasesRate, CountyFIPS %in% MyCounties$FIPS)
+    CountyDataTable<-cbind(MyCounties,rev(CovidCounties)[,1],rev(DeathCounties)[,1],rev(CaseRate)[,1])
+    CountyDataTable<-data.frame(CountyDataTable$State,CountyDataTable$County,CountyDataTable$Population, rev(CountyDataTable)[,3], rev(CountyDataTable)[,2],rev(CountyDataTable)[,1])
+    colnames(CountyDataTable)<-c("State","County","Population","Total Confirmed Cases","Total Fatalities", "Case Doubling Rate (days)" )
+    
+    ####################################################################################
+    #Mean Estimate
+    
+    #Next we use the calculated values, along with estimated values from the CDC. 
+    #The only input we want from the user is the social distancing rate. For this example, we just use 0.5
+    #CovidCounties<-subset(CovidConfirmedCases, CountyFIPS %in% IncludedCounties$FIPS)  
+    ActiveCases<-rev(CovidCounties)[1:7]
+    ActiveCases<-data.frame(CovidCounties[,1:4],ActiveCases[,1],MyCounties$Population, CountyDataTable$`Case Doubling Rate (days)`)
+    colnames(ActiveCases)<-c("CountyFIPS","CountyName","State","StateFIPS","CurrentCases", "Population", "Doubling Rate")
+    SIRinputs<-data.frame(sum(ActiveCases$CurrentCases),sum(ActiveCases$Population), mean(ActiveCases$`Doubling Rate`))  
+    colnames(SIRinputs)<-c("cases","pop","doubling")
+    
+    #Established Variables at the start for every county or populations  
+    cases<-SIRinputs$cases
+    pop<-SIRinputs$pop
+    
+    if(nrow(IHME_Region) == 0 || pop == 0){
+        NewDF <- data.frame(AFBaseLocations$Base[i],AFBaseLocations$State[i],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+        names(NewDF) <- c("Installation","State","Total Beds","7D IMHE Forecast","7D Peak","7D SEIAR Forecast","7D Peak","14D IMHE Forecast","14D Peak","14D SEIAR Forecast","14D Peak",
+                          "30D IMHE Forecast","30D Peak","30D SEIAR Forecast","30D Peak","60D IMHE Forecast","60D Peak","60D SEIAR Forecast","60D Peak")
+        ForecastDataTable <- rbind(ForecastDataTable,NewDF)        
+    }else{  
+        
+        
+        incubationtime<-5
+        latenttime<-2
+        doubling<-8  
+        recoverydays<-14
+        socialdistancing<-.15
+        hospitalizationrate<-5
+        icurate<-6
+        ventilatorrate<-3
+        hospitaltime<-3.5
+        icutime<-4
+        ventilatortime<-7
+        Ro<-2.5
+        
+        daysforecasted<-7
+        #SEIARProj<-SEIAR_Model_Run(cases,pop,5,2,8,14,.15,5,6,3,3.5,4,7,daysforecasted,2.5,.5)  
+        SEIARProj<-SEIAR_Model_Run(cases,pop,incubationtime,latenttime,doubling,recoverydays,socialdistancing,hospitalizationrate,
+                                   icurate,ventilatorrate,hospitaltime,icutime,ventilatortime,daysforecasted,Ro,.5)
+        MyDates<-seq(Sys.Date()-(length(CovidCounties)-80), length=daysforecasted, by="1 day")
+        DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
+        TotalData1<-data.frame(MyDates, SEIARProj$sir$hos_cum)
+        colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases")
+        colnames(TotalData1)<-c("ForecastDate", "Total Daily Cases")
+        DailyData<-DailyData[-1,]
+        DailyData<- dplyr::filter(DailyData, ForecastDate >= Sys.Date())
+        Peak<-which.max(DailyData$`Expected Daily Cases`)
+        Peak<-DailyData[Peak,2]
+        P1 = round(Peak)  
+        
+        colnames(DailyData)<-c("ForecastDate","Expected Hospitalizations")    
+        DailyData<-rbind(HistoricalData,DailyData)
+        drow = nrow(DailyData)
+        current = match(Sys.Date(),DailyData$ForecastDate)+7
+        C1 = round(sum(DailyData[1:drow,2]))
+        
+        daysforecasted<-14
+        SEIARProj<-SEIAR_Model_Run(cases,pop,incubationtime,latenttime,doubling,recoverydays,socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,ventilatortime,daysforecasted,Ro, .5)
+        MyDates<-seq(Sys.Date()-(length(CovidCounties)-80), length=daysforecasted, by="1 day")
+        DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
+        TotalData2<-data.frame(MyDates, SEIARProj$sir$hos_cum)
+        colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases")
+        colnames(TotalData2)<-c("ForecastDate", "Total Daily Cases")
+        DailyData<-DailyData[-1,]
+        DailyData<- dplyr::filter(DailyData, ForecastDate >= Sys.Date())
+        Peak<-which.max(DailyData$`Expected Daily Cases`)
+        Peak<-DailyData[Peak,2]
+        P2 = round(Peak)  
+        
+        colnames(DailyData)<-c("ForecastDate","Expected Hospitalizations")    
+        DailyData<-rbind(HistoricalData,DailyData)
+        drow = nrow(DailyData)
+        current = match(Sys.Date(),DailyData$ForecastDate)+14
+        C2 = round(sum(DailyData[1:drow,2]))
+        
+        daysforecasted<-30
+        SEIARProj<-SEIAR_Model_Run(cases,pop,incubationtime,latenttime,doubling,recoverydays,socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,ventilatortime,daysforecasted,Ro, .5)
+        MyDates<-seq(Sys.Date()-(length(CovidCounties)-80), length=daysforecasted, by="1 day")
+        DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
+        TotalData3<-data.frame(MyDates, SEIARProj$sir$hos_cum)
+        colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases")
+        colnames(TotalData3)<-c("ForecastDate", "Total Daily Cases")
+        DailyData<-DailyData[-1,]
+        DailyData<- dplyr::filter(DailyData, ForecastDate >= Sys.Date())
+        Peak<-which.max(DailyData$`Expected Daily Cases`)
+        Peak<-DailyData[Peak,2]
+        P3 = round(Peak)  
+        
+        colnames(DailyData)<-c("ForecastDate","Expected Hospitalizations")    
+        DailyData<-rbind(HistoricalData,DailyData)
+        drow = nrow(DailyData)
+        current = match(Sys.Date(),DailyData$ForecastDate)+30
+        C3 = round(sum(DailyData[1:drow,2]))        
+        
+        daysforecasted<-60
+        SEIARProj<-SEIAR_Model_Run(cases,pop,incubationtime,latenttime,doubling,recoverydays,socialdistancing,hospitalizationrate, icurate,ventilatorrate,hospitaltime,icutime,ventilatortime,daysforecasted,Ro, .5)
+        MyDates<-seq(Sys.Date()-(length(CovidCounties)-80), length=daysforecasted, by="1 day")
+        DailyData<-data.frame(MyDates, SEIARProj$sir$hos_add)
+        TotalData4<-data.frame(MyDates, SEIARProj$sir$hos_cum)
+        colnames(DailyData)<-c("ForecastDate", "Expected Daily Cases")
+        colnames(TotalData4)<-c("ForecastDate", "Total Daily Cases")  
+        DailyData<-DailyData[-1,]
+        DailyData<- dplyr::filter(DailyData, ForecastDate >= Sys.Date())
+        Peak<-which.max(DailyData$`Expected Daily Cases`)
+        Peak<-DailyData[Peak,2]
+        P4 = round(Peak)  
+        
+        colnames(DailyData)<-c("ForecastDate","Expected Hospitalizations")    
+        DailyData<-rbind(HistoricalData,DailyData)
+        drow = nrow(DailyData)
+        current = match(Sys.Date(),DailyData$ForecastDate)+60
+        C4 = round(sum(DailyData[1:drow,2]))     
+        
+        # C1 = round(TotalData1)
+        # C2 = round(TotalData2)
+        # C3 = round(TotalData3)
+        # c4 = round(TotalData4)   
+        
+        IHME_Region<-rbind(HistoricalData,IHME_Region)
+        IHME_Region$ForecastDate<-as.Date(IHME_Region$ForecastDate)
+        #IHME_Region[order(IHME_Region$ForecastDate),]
+        IHME_Region <- dplyr::arrange(IHME_Region,ForecastDate)
+        current7 = match(Sys.Date(),IHME_Region$ForecastDate)+7
+        current14 = match(Sys.Date(),IHME_Region$ForecastDate)+14
+        current30 = match(Sys.Date(),IHME_Region$ForecastDate)+30
+        current60 = match(Sys.Date(),IHME_Region$ForecastDate)+60            
+        I1 = round(sum(IHME_Region[1:current7,2]))
+        I2 = round(sum(IHME_Region[1:current14,2]))
+        I3 = round(sum(IHME_Region[1:current30,2]))
+        I4 = round(sum(IHME_Region[1:current60,2]))            
+        Peak1<-CalculateIHMEPeak(AFBaseLocations$Base[i],MyHospitals,50)
+        Peak2<-CalculateIHMEPeak(AFBaseLocations$Base[i],MyHospitals,50)
+        Peak3<-CalculateIHMEPeak(AFBaseLocations$Base[i],MyHospitals,50)
+        Peak4<-CalculateIHMEPeak(AFBaseLocations$Base[i],MyHospitals,50)
+        NewDF <- data.frame(AFBaseLocations$Base[i],AFBaseLocations$State[i],TotalBedsCounty,I1,Peak1,C1,P1,I2,Peak2,C2,P2,I3,Peak3,C3,P3,I4,Peak4,C4,P4)  
+        names(NewDF) <- c("Installation","State","Total Beds","7D IMHE Forecast","7D Peak","7D SEIAR Forecast","7D Peak","14D IMHE Forecast","14D Peak","14D SEIAR Forecast","14D Peak",
+                          "30D IMHE Forecast","30D Peak","30D SEIAR Forecast","30D Peak","60D IMHE Forecast","60D Peak","60D SEIAR Forecast","60D Peak")  
+        ForecastDataTable <- rbind(ForecastDataTable,NewDF) 
+        
+    }
+} 
+#write.table(ForecastDataTable, file = "InstallationForecastData.csv",sep = "\t", row.names = T)
+
+
+
 
 
 # Identify Info Pages

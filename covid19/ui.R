@@ -105,7 +105,6 @@ ui <- tagList(
                                        ),
                                        br()
                                        
-
                                        # div(style="text-align:center", tags$hr(style="border-color: #444;"), "Generate & Download Report:"),
                                        # br(),
                                        # fluidRow(
