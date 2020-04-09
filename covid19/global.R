@@ -2773,10 +2773,16 @@ for (i in 1:AFrow){
         current = match(Sys.Date(),DailyData$ForecastDate)+60
         C4 = round(sum(DailyData[1:drow,2]))     
         
-        # C1 = round(TotalData1)
-        # C2 = round(TotalData2)
-        # C3 = round(TotalData3)
-        # c4 = round(TotalData4)   
+        hospCounty <- subset(HospUtlzCounty, fips %in% MyCounties$FIPS)
+        #Finds number of hospitals in radius
+        TotalBeds<-sum(hospCounty$num_staffed_beds)
+        #get historic utilization
+        hospCounty$bedsUsed <- hospCounty$bed_utilization * hospCounty$num_staffed_beds
+        totalUsedBeds <- sum(hospCounty$bedsUsed)
+        baseUtlz <- totalUsedBeds/TotalBeds              
+        #Finds number of hospitals in radius
+        TotalBeds<-TotalBeds * (1-baseUtlz)
+        TotalBeds<-round(TotalBeds)        
         
         IHME_Region<-rbind(HistoricalData,IHME_Region)
         IHME_Region$ForecastDate<-as.Date(IHME_Region$ForecastDate)
@@ -2794,14 +2800,13 @@ for (i in 1:AFrow){
         Peak2<-CalculateIHMEPeak(AFBaseLocations$Base[i],MyHospitals,50)
         Peak3<-CalculateIHMEPeak(AFBaseLocations$Base[i],MyHospitals,50)
         Peak4<-CalculateIHMEPeak(AFBaseLocations$Base[i],MyHospitals,50)
-        NewDF <- data.frame(AFBaseLocations$Base[i],AFBaseLocations$State[i],TotalBedsCounty,I1,Peak1,C1,P1,I2,Peak2,C2,P2,I3,Peak3,C3,P3,I4,Peak4,C4,P4)  
+        NewDF <- data.frame(AFBaseLocations$Base[i],AFBaseLocations$State[i],TotalBeds,I1,Peak1,C1,P1,I2,Peak2,C2,P2,I3,Peak3,C3,P3,I4,Peak4,C4,P4)  
         names(NewDF) <- c("Installation","State","Total Beds","7D IMHE Forecast","7D Peak","7D SEIAR Forecast","7D Peak","14D IMHE Forecast","14D Peak","14D SEIAR Forecast","14D Peak",
                           "30D IMHE Forecast","30D Peak","30D SEIAR Forecast","30D Peak","60D IMHE Forecast","60D Peak","60D SEIAR Forecast","60D Peak")  
         ForecastDataTable <- rbind(ForecastDataTable,NewDF) 
         
     }
-} 
-#write.table(ForecastDataTable, file = "InstallationForecastData.csv",sep = "\t", row.names = T)
+}
 
 
 
