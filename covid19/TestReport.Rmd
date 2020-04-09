@@ -1,5 +1,6 @@
 ---
-title: <center> CHAD Output Summary </center>
+title: |
+  <center> CHAD Output Summary </center>
   <center> `r format(Sys.time(), '%d %B, %Y')` </center>
 author: 
 date:
@@ -83,7 +84,7 @@ div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
 <div class = "col-md-8">
 
 ```{r fig.height = 4, fig.width = 5, echo=FALSE}
-CountyChoro = PlotLocalChoro(Counties, base, "County")
+CountyChoro = PlotLocalChoro(Counties, params$base, "County")
 CountyChoro
 ```
 
@@ -102,7 +103,7 @@ The charts below display the
 
 <div class = "col-md-6">
 ```{r fig.height = 4, fig.width = 4, echo=FALSE}
-CCDaily = CovidCasesPerDayChart(base, radius, Counties, Hospitals)
+CCDaily = CovidCasesPerDayChart(params$base, params$radius, Counties, Hospitals)
 CCDaily = CCDaily %>% layout(xaxis = list(showgrid = T),
                              yaxis = list(showgrid = T))
 CCDaily
@@ -111,7 +112,7 @@ CCDaily
 
 <div class = "col-md-6">
 ```{r fig.height = 4, fig.width = 4, echo=FALSE}
-CCtot = CovidCasesCumChart(base, radius, Counties, Hospitals)
+CCtot = CovidCasesCumChart(params$base, params$radius, Counties, Hospitals)
 CCtot = CCtot %>% layout(xaxis = list(showgrid = T),
                          yaxis = list(showgrid = T))
 CCtot
@@ -141,7 +142,12 @@ This section will display the projections from the IHME model and CHIME inspired
 #### Overlay
 
 ```{r fig.height = 5, fig.width = 10,echo=FALSE}
-overlay = PlotOverlay(params$base, Counties, Hospitals, params$socDis, params$pjDays)
+overlay = PlotOverlay(params$base, 
+                      Counties, 
+                      Hospitals, 
+                      params$socDis, 
+                      params$pjDays,
+                      "Hospitalizations")
 overlay
 ```
 
