@@ -1,7 +1,9 @@
 ---
 title: |
   <center> CHAD Output Summary </center>
+subtitle: |
   <center> `r format(Sys.time(), '%d %B, %Y')` </center>
+  
 author: 
 date:
 output: html_document
