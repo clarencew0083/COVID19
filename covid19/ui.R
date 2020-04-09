@@ -103,15 +103,15 @@ ui <- tagList(
                                                        max = 40,
                                                        value = 15)
                                        ),
-                                       br()
+                                       br(),
                                        
-                                       # div(style="text-align:center", tags$hr(style="border-color: #444;"), "Generate & Download Report:"),
-                                       # br(),
-                                       # fluidRow(
-                                       #     downloadButton("report", "Generate Report", class = "butt"),
-                                       #     tags$style(".skin-black .sidebar .butt{background-color:#15824d;color: white;border-color:white;}"),
-                                       #     align = "center"
-                                       # )
+                                       div(style="text-align:center", tags$hr(style="border-color: #444;"), "Generate & Download Report:"),
+                                       br(),
+                                       fluidRow(
+                                           downloadButton("report", "Generate Report", class = "butt"),
+                                           tags$style(".skin-black .sidebar .butt{background-color:#15824d;color: white;border-color:white;}"),
+                                           align = "center"
+                                       )
 
                                        # fluidRow(
                                        #     valueBox("LOW RISK", subtitle ="Mission Risk **notional ex.**",color= "green",width = 12)
