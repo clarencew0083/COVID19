@@ -16,34 +16,6 @@
 # Define server logic, within this all ouputs and reactive variables are generated. 
 server <- function(input, output) {
     
-<<<<<<< HEAD
-    GetCounties<-reactive({
-        
-        CountyInfo$DistanceMiles = cimd[,as.character(input$Base)]
-        IncludedCounties = dplyr::filter(CountyInfo, DistanceMiles <= input$Radius)
-        IncludedCounties
-        
-    })
-    
-    GetHospitals<-reactive({
-        
-        #Finds number of hospitals in radius
-        HospitalInfo$DistanceMiles = himd[,as.character(input$Base)]
-        
-        IncludedHospitals = dplyr::filter(HospitalInfo, (DistanceMiles <= input$Radius))
-        IncludedHospitals = dplyr::filter(IncludedHospitals, (TYPE=="GENERAL ACUTE CARE") | (TYPE=="CRITICAL ACCESS"))
-        IncludedHospitals
-        
-    })
-    
-    #Finds which counties in given radius. Also Give county statistics
-    output$TotalPopulation <- renderValueBox({
-        
-        valueBox(subtitle = "Total Air Force Cases",
-                 comma(CalculateCounties(input$Base,input$Radius, GetCounties())),
-                 icon = icon("list-ol"))
-=======
-    
     # Step One
     ###################################################################################################################################################
     
@@ -64,25 +36,17 @@ server <- function(input, output) {
                  icon = icon("list-ol"),
                  color = "light-blue"
         )
->>>>>>> f6685044121c177de7bfe32fe6caea3abcf6c470
         
     })
     
     # Finds Covid Cases and statistics on covid per county
     output$CovidCases <- renderValueBox({
-<<<<<<< HEAD
-        
-        valueBox(subtitle = "Local Cases",
-                 comma(CalculateCovid(input$Base, input$Radius, GetCounties())),
-                 icon = icon("list-ol"))
-=======
         MyCounties<-GetCounties(input$Base,input$Radius)
         valueBox(subtitle = "Local Cases",
                  comma(CalculateCovid(MyCounties)),
                  icon = icon("list-ol"),
                  color = "light-blue"
         )
->>>>>>> f6685044121c177de7bfe32fe6caea3abcf6c470
         
     })
     
@@ -100,21 +64,12 @@ server <- function(input, output) {
     
     # Finds Covid deaths and statistics on covid per county
     output$LocalCovidDeaths <- renderValueBox({
-<<<<<<< HEAD
-        
-        valueBox(subtitle = "Local Deaths",
-                 comma(CalculateDeaths(input$Base, input$Radius, GetCounties())),
-                 icon = icon("skull"),
-                 color = "red")
-        
-=======
         MyCounties<-GetCounties(input$Base,input$Radius)
         valueBox(subtitle = "Local Fatalities",
                  comma(CalculateDeaths(MyCounties)),
                  icon = icon("skull"),
                  color = "blue"
         )
->>>>>>> f6685044121c177de7bfe32fe6caea3abcf6c470
     })
     
     #Outputs change in deaths per day   
@@ -130,14 +85,6 @@ server <- function(input, output) {
     
     #Finds hospital information within a given 100 mile radius. Calculates number of total hospital beds. Can compare to number of cases
     output$HospitalUtilization <- renderValueBox({
-<<<<<<< HEAD
-        
-        valueBox(subtitle = "Local Hospital Utilization",
-                 HospitalIncreases(input$Base,input$Radius, GetCounties(), GetHospitals()),
-                 icon = icon("hospital"),
-                 color = "teal")
-        
-=======
         MyCounties<-GetCounties(input$Base,input$Radius)
         MyHospitals<-GetHospitals(input$Base,input$Radius)
         valueBox(subtitle = "Estimated Local Hospital Bed Utilization",
@@ -232,7 +179,6 @@ server <- function(input, output) {
                  paste(Peak),
                  icon = icon("hospital"),
                  color = "navy")
->>>>>>> f6685044121c177de7bfe32fe6caea3abcf6c470
     })
     
     
@@ -249,19 +195,6 @@ server <- function(input, output) {
     
     
     #Create first plot of local health population 
-<<<<<<< HEAD
-    output$LocalHealthPlot1<-renderPlot({
-        
-        CovidCasesPerDayChart(input$Base, input$Radius, GetCounties(),GetHospitals())
-        
-    })
-    
-    #Create second plot of local health population 
-    output$LocalHealthPlot2<-renderPlot({
-        
-        CovidCasesCumChart(input$Base, input$Radius, GetCounties(), GetHospitals())
-        
-=======
     output$LocalHealthPlot1<-renderPlotly({
         MyCounties<-GetCounties(input$Base,input$Radius)
         MyHospitals<-GetHospitals(input$Base,input$Radius)
@@ -273,7 +206,6 @@ server <- function(input, output) {
         MyCounties<-GetCounties(input$Base,input$Radius)
         MyHospitals<-GetHospitals(input$Base,input$Radius)
         CovidCasesCumChart(input$Base, input$Radius, MyCounties, MyHospitals)
->>>>>>> f6685044121c177de7bfe32fe6caea3abcf6c470
     })
     
     
@@ -283,12 +215,7 @@ server <- function(input, output) {
     
     #Create Country Plot on Summary page
     output$SummaryPlot<-renderGvis({
-<<<<<<< HEAD
-        
-        DF<-cbind.data.frame(CovidConfirmedCases$State, CovidConfirmedCases[,length(CovidConfirmedCases)])
-=======
         DF<-cbind.data.frame(CovidConfirmedCases$State, rev(CovidConfirmedCases)[,1])
->>>>>>> f6685044121c177de7bfe32fe6caea3abcf6c470
         colnames(DF)<-c("state","Value")
         ChlorData<-plyr::ddply(DF, "state", numcolwise(sum))
         
@@ -299,32 +226,6 @@ server <- function(input, output) {
         colnames(states)<-c("state_name","COVID-19 Cases")
         
         gvisGeoChart(states, "state_name", "COVID-19 Cases", 
-<<<<<<< HEAD
-                     options = list(region="US", 
-                                    displayMode="regions", 
-                                    resolution="provinces",
-                                    width=900, height=700))
-        
-    })
-    
-    observeEvent(input$inputInfo, {
-        showModal(
-            modalDialog(size = "l",
-                        fade = TRUE,
-                        easyClose = TRUE, 
-                        title = "USER INPUTS",
-                        p("Some information")))
-        
-    })
-    
-    observeEvent(input$calcInfo, {
-        showModal(
-            modalDialog(size = "l",
-                        fade = TRUE, 
-                        easyClose = TRUE, 
-                        title = "CALCULATIONS",
-                        p("Some information")))
-=======
                      options=list(region="US",
                                   colors="['#D3D3D3', 'red']",
                                   displayMode="regions", 
@@ -462,19 +363,10 @@ server <- function(input, output) {
                 size = "l",fade = TRUE, easyClose = TRUE, title = "CALCULATIONS",
                 CalcLink)
         )
->>>>>>> f6685044121c177de7bfe32fe6caea3abcf6c470
     })
     
     observeEvent(input$sourceInfo, {
         showModal(
-<<<<<<< HEAD
-            modalDialog(size = "l",
-                        fade = TRUE,
-                        easyClose = TRUE, 
-                        title = "SOURCES",
-                        p("Some information")))
-    })  
-=======
             modalDialog(
                 size = "l",fade = TRUE, easyClose = TRUE, title = "SOURCES",
                 SourceLink)
@@ -511,8 +403,5 @@ server <- function(input, output) {
     #     }
     # )
     
-    
-    
->>>>>>> f6685044121c177de7bfe32fe6caea3abcf6c470
     
 }
