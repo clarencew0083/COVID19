@@ -15,11 +15,10 @@ ui <- tagList(
         ),
         dashboardSidebar(width = 300, 
                          sidebarMenu(
-                             selectInput(
-                                 "Base",
-                                 "Choose your base:", 
-                                 list(`Installation` = sort(BaseList) ), 
-                                 selectize = FALSE),
+                             selectInput("Base",
+                                         "Choose your base:", 
+                                         choices = unique(BaseList),
+                                         selectize = FALSE),
                              sliderInput("Radius",
                                          "Choose your local radius (miles):",
                                          min = 10,
@@ -40,13 +39,10 @@ ui <- tagList(
                                              "% Social distancing in your area:",
                                              min = 0,
                                              max = 100,
-                                             value = 60)
-                             ),
+                                             value = 60)),
                              br(),
                              actionButton("refresh", "Refresh", width = "90%"),
-                             hr()
-                         )
-        ),
+                             hr())),
         
         dashboardBody(
             tags$head(tags$style(HTML(
