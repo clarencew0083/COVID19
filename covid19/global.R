@@ -2601,7 +2601,7 @@ AFrow = nrow(AFBaseLocations)
 ForecastDataTable <- setNames(data.frame(matrix(ncol = 19, nrow = 0)), c("Installation","State","Total Beds","7D IMHE Forecast","7D Peak","7D SEIAR Forecast","7D Peak",
                                                                          "14D IMHE Forecast","14D Peak","14D SEIAR Forecast","14D Peak","30D IMHE Forecast","30D Peak","30D SEIAR Forecast","30D Peak",
                                                                          "60D IMHE Forecast","60D Peak","60D SEIAR Forecast","60D Peak"))
-for (i in 1:AFrow){
+for (i in 2:AFrow){
     #Create a datatable with just the forecasted values for every installation
     #Creating the stats and dataframes determined by the base we choose to look at.
     #IHME_Model is the initial import data table from global.R
