@@ -1537,7 +1537,8 @@ PlotOverlay<-function(ChosenBase, IncludedCounties, IncludedHospitals, SocialDis
             scale_linetype_manual(values = c("dashed", "dashed", "solid"))+
             geom_ribbon(aes(ymin = `Lower Bound Fatalities`, ymax = `Upper Bound Fatalities`), 
                         alpha = .2) +
-            ggtitle("Fatalities")+
+            ggtitle("Projected Fatalities")+
+            ylab("Fatalities")+
             theme_bw() + 
             theme(plot.title = element_text(face = "bold", size = 15, family = "sans"),
                   axis.title = element_text(face = "bold", size = 11, family = "sans"),
